@@ -2,81 +2,81 @@ import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
- * DTO untuk request registrasi sertifikat (Fase 1: Upload ke IPFS)
- * Admin mengisi data ini melalui form di frontend
+ * DTO for certificate registration request (Phase 1: Upload to IPFS)
+ * Admin fills in this data through the frontend form
  */
 export class RegisterCertificateDto {
   @ApiProperty({
-    description: 'ID unik dokumen (format: UNIV-TAHUN-NOMOR)',
-    example: 'UGM-2024-00001',
+    description: 'Unique document ID (format: UNIV-YEAR-NUMBER)',
+    example: 'UMI-2022-13020220166',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Document ID tidak boleh kosong' })
+  @IsNotEmpty({ message: 'Document ID cannot be empty' })
   documentId: string;
 
   @ApiProperty({
-    description: 'Nama lengkap mahasiswa',
-    example: 'Budi Santoso',
+    description: 'Student full name',
+    example: 'Abd. Mugni Adji Susilo',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Nama mahasiswa tidak boleh kosong' })
+  @IsNotEmpty({ message: 'Student name cannot be empty' })
   studentName: string;
 
   @ApiProperty({
-    description: 'NIM (Nomor Induk Mahasiswa)',
-    example: '20/504900/TK/51234',
+    description: 'Student ID number',
+    example: '13020220166',
   })
   @IsString()
-  @IsNotEmpty({ message: 'NIM tidak boleh kosong' })
+  @IsNotEmpty({ message: 'Student ID cannot be empty' })
   studentId: string;
 
   @ApiProperty({
-    description: 'Alamat wallet mahasiswa (penerima SBT)',
+    description: 'Student wallet address (SBT recipient)',
     example: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Alamat wallet mahasiswa tidak boleh kosong' })
+  @IsNotEmpty({ message: 'Student wallet address cannot be empty' })
   studentWallet: string;
 
   @ApiProperty({
-    description: 'Gelar/jenjang pendidikan',
+    description: 'Degree / education level',
     example: 'S1',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Gelar tidak boleh kosong' })
+  @IsNotEmpty({ message: 'Degree cannot be empty' })
   degree: string;
 
   @ApiProperty({
-    description: 'Program studi / jurusan',
+    description: 'Study program / major',
     example: 'Teknik Informatika',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Jurusan tidak boleh kosong' })
+  @IsNotEmpty({ message: 'Major cannot be empty' })
   major: string;
 
   @ApiProperty({
-    description: 'Nama institusi penerbit',
-    example: 'Universitas Gadjah Mada',
+    description: 'Issuing institution name',
+    example: 'Universitas Muslim Indonesia',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Nama institusi tidak boleh kosong' })
+  @IsNotEmpty({ message: 'Issuer name cannot be empty' })
   issuerName: string;
 }
 
 /**
- * DTO untuk request verifikasi dokumen
+ * DTO for document verification request
  */
 export class VerifyDocumentDto {
   @ApiProperty({
-    description: 'ID unik dokumen',
-    example: 'UGM-2024-00001',
+    description: 'Unique document ID',
+    example: 'UMI-2022-13020220166',
   })
   @IsString()
   @IsNotEmpty()
   documentId: string;
 
   @ApiProperty({
-    description: 'CID untuk deep verification (opsional)',
+    description: 'CID for deep verification (optional)',
     example: 'QmX7b3e1LpHTzKsRoEaqbzCp5AuNpBSmk5pCiN4QiPzMar',
     required: false,
   })

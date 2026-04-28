@@ -9,13 +9,13 @@ export class BlockchainController {
 
   /**
    * GET /blockchain/contract-info
-   * Mendapatkan ABI dan address contract untuk frontend
+   * Get ABI and contract address for frontend
    */
   @Get('contract-info')
   @ApiOperation({
-    summary: 'Mendapatkan info smart contract (ABI + Address)',
+    summary: 'Get smart contract info (ABI + Address)',
     description:
-      'Frontend memerlukan ABI dan address untuk berinteraksi langsung dengan smart contract via MetaMask',
+      'Frontend requires ABI and address to interact directly with the smart contract via MetaMask',
   })
   getContractInfo() {
     return {
@@ -26,17 +26,17 @@ export class BlockchainController {
 
   /**
    * GET /blockchain/verify/:documentId
-   * Verifikasi sertifikat berdasarkan documentId (dari QR Code scan)
+   * Verify certificate by documentId (from QR Code scan)
    */
   @Get('verify/:documentId')
   @ApiOperation({
-    summary: 'Verifikasi sertifikat berdasarkan Document ID',
+    summary: 'Verify certificate by Document ID',
     description:
-      'Endpoint utama untuk verifikasi saat scan QR Code. Memanggil verifyByDocumentId() pada smart contract (gratis, tanpa gas fee)',
+      'Main endpoint for verification when scanning QR Code. Calls verifyByDocumentId() on the smart contract (free, no gas fee)',
   })
   @ApiParam({
     name: 'documentId',
-    description: 'ID unik dokumen (contoh: UMI-2022-13020220166)',
+    description: 'Unique document ID (e.g.: UMI-2022-13020220166)',
     example: 'UMI-2022-13020220166',
   })
   async verifyByDocumentId(@Param('documentId') documentId: string) {
@@ -47,14 +47,14 @@ export class BlockchainController {
       return {
         success: true,
         message: result.isValid
-          ? 'Dokumen VALID dan terdaftar di blockchain'
-          : 'Dokumen TIDAK VALID (telah dicabut)',
+          ? 'Document is VALID and registered on the blockchain'
+          : 'Document is INVALID (has been revoked)',
         data: result,
       };
     } catch (error) {
       return {
         success: false,
-        message: 'Dokumen tidak ditemukan di blockchain',
+        message: 'Document not found on the blockchain',
         error: error.message,
       };
     }
@@ -66,18 +66,18 @@ export class BlockchainController {
    */
   @Get('verify-deep/:documentId')
   @ApiOperation({
-    summary: 'Deep verification: bandingkan CID dokumen',
+    summary: 'Deep verification: compare document CID',
     description:
-      'Membandingkan CID file yang di-upload dengan CID yang tersimpan di blockchain. Berguna untuk memastikan dokumen digital tidak dimodifikasi.',
+      'Compare the uploaded file CID with the CID stored on the blockchain. Useful for ensuring a digital document has not been modified.',
   })
   @ApiParam({
     name: 'documentId',
-    description: 'ID unik dokumen',
+    description: 'Unique document ID',
     example: 'UMI-2022-13020220166',
   })
   @ApiQuery({
     name: 'cid',
-    description: 'CID dari file yang ingin diverifikasi',
+    description: 'CID of the file to verify',
     example: 'QmX7b3e1LpHTzKsRoEaqbzCp5AuNpBSmk5pCiN4QiPzMar',
   })
   async verifyDeep(
@@ -92,12 +92,12 @@ export class BlockchainController {
 
       let message: string;
       if (result.isValid && result.isMatching) {
-        message = 'Dokumen VALID dan ASLI (CID cocok dengan blockchain)';
+        message = 'Document is VALID and AUTHENTIC (CID matches blockchain)';
       } else if (result.isValid && !result.isMatching) {
         message =
-          'Dokumen terdaftar tapi CID TIDAK COCOK — kemungkinan file telah dimodifikasi';
+          'Document is registered but CID DOES NOT MATCH — the file may have been modified';
       } else {
-        message = 'Dokumen TIDAK VALID (telah dicabut)';
+        message = 'Document is INVALID (has been revoked)';
       }
 
       return {
@@ -108,7 +108,7 @@ export class BlockchainController {
     } catch (error) {
       return {
         success: false,
-        message: 'Dokumen tidak ditemukan di blockchain',
+        message: 'Document not found on the blockchain',
         error: error.message,
       };
     }
@@ -116,15 +116,15 @@ export class BlockchainController {
 
   /**
    * GET /blockchain/certificate/:documentId
-   * Mengambil data sertifikat lengkap
+   * Get complete certificate data
    */
   @Get('certificate/:documentId')
   @ApiOperation({
-    summary: 'Mengambil data sertifikat lengkap dari blockchain',
+    summary: 'Get complete certificate data from blockchain',
   })
   @ApiParam({
     name: 'documentId',
-    description: 'ID unik dokumen',
+    description: 'Unique document ID',
     example: 'UMI-2022-13020220166',
   })
   async getCertificate(@Param('documentId') documentId: string) {
@@ -137,7 +137,7 @@ export class BlockchainController {
     } catch (error) {
       return {
         success: false,
-        message: 'Dokumen tidak ditemukan',
+        message: 'Document not found',
         error: error.message,
       };
     }
@@ -145,11 +145,11 @@ export class BlockchainController {
 
   /**
    * GET /blockchain/stats
-   * Statistik total sertifikat
+   * Total certificate statistics
    */
   @Get('stats')
   @ApiOperation({
-    summary: 'Mendapatkan statistik sertifikat',
+    summary: 'Get certificate statistics',
   })
   async getStats() {
     try {

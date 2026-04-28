@@ -5,16 +5,16 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 /**
- * Service untuk berinteraksi dengan Smart Contract AcademicCertificate di blockchain.
+ * Service for interacting with the AcademicCertificate Smart Contract on blockchain.
  *
- * Tugas utama:
- * 1. Membaca data sertifikat dari blockchain (view functions - gratis)
- * 2. Memverifikasi sertifikat berdasarkan documentId atau CID
- * 3. Menyediakan contract instance untuk frontend (ABI + address)
+ * Main tasks:
+ * 1. Read certificate data from blockchain (view functions - free)
+ * 2. Verify certificates by documentId or CID
+ * 3. Provide contract instance for frontend (ABI + address)
  *
- * Catatan: Transaksi write (registerCertificate, revokeCertificate)
- * dilakukan langsung dari frontend melalui MetaMask, bukan dari backend.
- * Backend hanya melakukan operasi READ untuk verifikasi.
+ * Note: Write transactions (registerCertificate, revokeCertificate)
+ * are performed directly from the frontend via MetaMask, not from the backend.
+ * The backend only performs READ operations for verification.
  */
 @Injectable()
 export class BlockchainService implements OnModuleInit {
@@ -40,21 +40,21 @@ export class BlockchainService implements OnModuleInit {
       this.abi = JSON.parse(abiRaw);
     } catch {
       this.logger.warn(
-        'ABI file tidak ditemukan. Pastikan file abi/AcademicCertificate.json ada.',
+        'ABI file not found. Make sure abi/AcademicCertificate.json exists.',
       );
       this.abi = [];
     }
 
-    // Setup provider dan contract (read-only)
-    // Menggunakan static network agar provider tidak langsung melakukan
-    // koneksi ke RPC saat startup (mencegah crash jika blockchain node belum aktif)
+    // Setup provider and contract (read-only)
+    // Using static network so provider does not immediately connect
+    // to RPC at startup (prevents crash if blockchain node is not active)
     try {
       const staticNetwork = ethers.Network.from(31337); // Hardhat default chainId
       this.provider = new ethers.JsonRpcProvider(rpcUrl, staticNetwork, {
         staticNetwork: staticNetwork,
       });
 
-      // Validasi: pastikan contract address adalah alamat Ethereum yang valid
+      // Validation: ensure contract address is a valid Ethereum address
       const isValidAddress =
         this.contractAddress && ethers.isAddress(this.contractAddress);
 
@@ -69,20 +69,20 @@ export class BlockchainService implements OnModuleInit {
         );
       } else {
         this.logger.warn(
-          'CONTRACT_ADDRESS belum dikonfigurasi atau tidak valid. ' +
-          'Deploy smart contract terlebih dahulu dan update .env',
+          'CONTRACT_ADDRESS is not configured or invalid. ' +
+          'Deploy the smart contract first and update .env',
         );
       }
     } catch (error) {
       this.logger.warn(
-        `Tidak dapat menginisialisasi blockchain provider: ${error.message}`,
+        `Unable to initialize blockchain provider: ${error.message}`,
       );
     }
   }
 
   /**
-   * Mendapatkan ABI dan address contract untuk frontend
-   * Frontend membutuhkan ini untuk berinteraksi langsung via MetaMask
+   * Get ABI and contract address for frontend
+   * Frontend needs this to interact directly via MetaMask
    */
   getContractInfo(): { abi: any[]; address: string } {
     return {
@@ -92,11 +92,11 @@ export class BlockchainService implements OnModuleInit {
   }
 
   /**
-   * Verifikasi sertifikat berdasarkan documentId (QR Code scan)
-   * Memanggil verifyByDocumentId() - view function (gratis, tanpa gas)
+   * Verify certificate by documentId (QR Code scan)
+   * Calls verifyByDocumentId() - view function (free, no gas)
    *
-   * @param documentId ID unik dokumen
-   * @returns Data sertifikat dari blockchain
+   * @param documentId Unique document ID
+   * @returns Certificate data from blockchain
    */
   async verifyByDocumentId(documentId: string): Promise<{
     isValid: boolean;
@@ -138,18 +138,18 @@ export class BlockchainService implements OnModuleInit {
       };
     } catch (error) {
       this.logger.error(
-        `Gagal verifikasi dokumen ${documentId}: ${error.message}`,
+        `Failed to verify document ${documentId}: ${error.message}`,
       );
       throw error;
     }
   }
 
   /**
-   * Verifikasi sertifikat dengan membandingkan CID (deep verification)
-   * Menggunakan staticCall untuk memanggil verifyCertificate() tanpa gas
+   * Verify certificate by comparing CID (deep verification)
+   * Uses staticCall to call verifyCertificate() without gas
    *
-   * @param documentId ID dokumen
-   * @param ipfsCID CID yang ingin diverifikasi
+   * @param documentId Document ID
+   * @param ipfsCID CID to verify against
    */
   async verifyCertificateWithCID(
     documentId: string,
@@ -200,14 +200,14 @@ export class BlockchainService implements OnModuleInit {
       };
     } catch (error) {
       this.logger.error(
-        `Gagal deep verify dokumen ${documentId}: ${error.message}`,
+        `Failed to deep verify document ${documentId}: ${error.message}`,
       );
       throw error;
     }
   }
 
   /**
-   * Mengecek apakah sertifikat sudah terdaftar di blockchain
+   * Check if a certificate is registered on blockchain
    */
   async certificateExists(documentId: string): Promise<boolean> {
     this.ensureContractReady();
@@ -215,7 +215,7 @@ export class BlockchainService implements OnModuleInit {
   }
 
   /**
-   * Mengambil data sertifikat lengkap dari blockchain
+   * Get complete certificate data from blockchain
    */
   async getCertificate(documentId: string): Promise<{
     certificate: {
@@ -256,14 +256,14 @@ export class BlockchainService implements OnModuleInit {
       };
     } catch (error) {
       this.logger.error(
-        `Gagal ambil data dokumen ${documentId}: ${error.message}`,
+        `Failed to get document data ${documentId}: ${error.message}`,
       );
       throw error;
     }
   }
 
   /**
-   * Mengambil CID dari blockchain
+   * Get CID from blockchain
    */
   async getCID(documentId: string): Promise<string> {
     this.ensureContractReady();
@@ -271,7 +271,7 @@ export class BlockchainService implements OnModuleInit {
   }
 
   /**
-   * Mengambil total jumlah sertifikat terdaftar
+   * Get total number of registered certificates
    */
   async getTotalCertificates(): Promise<number> {
     this.ensureContractReady();
@@ -280,7 +280,7 @@ export class BlockchainService implements OnModuleInit {
   }
 
   /**
-   * Mengambil semua document IDs
+   * Get all document IDs
    */
   async getAllDocumentIds(): Promise<string[]> {
     this.ensureContractReady();
@@ -288,12 +288,12 @@ export class BlockchainService implements OnModuleInit {
   }
 
   /**
-   * Memastikan contract sudah siap digunakan
+   * Ensure contract is ready to use
    */
   private ensureContractReady(): void {
     if (!this.contract) {
       throw new Error(
-        'Smart contract belum terhubung. Pastikan CONTRACT_ADDRESS dan BLOCKCHAIN_RPC_URL sudah dikonfigurasi.',
+        'Smart contract is not connected. Make sure CONTRACT_ADDRESS and BLOCKCHAIN_RPC_URL are configured.',
       );
     }
   }

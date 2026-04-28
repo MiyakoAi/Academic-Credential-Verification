@@ -3,11 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import * as QRCode from 'qrcode';
 
 /**
- * Service untuk membuat QR Code berisi URL verifikasi.
+ * Service for generating QR Codes containing verification URLs.
  *
- * QR Code berisi URL: https://[domain]/verify?id=[documentId]
- * Ketika di-scan, URL ini mengarahkan verifier ke halaman verifikasi
- * yang secara otomatis mengambil data dari blockchain.
+ * QR Code contains URL: https://[domain]/verify?id=[documentId]
+ * When scanned, this URL directs the verifier to a verification page
+ * that automatically fetches data from the blockchain.
  */
 @Injectable()
 export class QrcodeService {
@@ -21,25 +21,25 @@ export class QrcodeService {
   }
 
   /**
-   * Membuat URL verifikasi dari documentId
-   * @param documentId ID unik dokumen
-   * @returns URL verifikasi lengkap
+   * Build verification URL from documentId
+   * @param documentId Unique document ID
+   * @returns Complete verification URL
    */
   buildVerificationUrl(documentId: string): string {
     return `${this.verificationBaseUrl}?id=${encodeURIComponent(documentId)}`;
   }
 
   /**
-   * Membuat QR Code dalam format Data URL (base64 PNG)
-   * Cocok untuk ditampilkan langsung di browser sebagai <img src="...">
+   * Generate QR Code as Data URL (base64 PNG)
+   * Suitable for displaying directly in browser as <img src="...">
    *
-   * @param documentId ID unik dokumen
-   * @returns Data URL QR Code (base64 PNG)
+   * @param documentId Unique document ID
+   * @returns QR Code Data URL (base64 PNG)
    */
   async generateQRCodeDataURL(documentId: string): Promise<string> {
     const url = this.buildVerificationUrl(documentId);
     this.logger.log(
-      `Generating QR Code untuk: ${documentId} → ${url}`,
+      `Generating QR Code for: ${documentId} → ${url}`,
     );
 
     const dataUrl = await QRCode.toDataURL(url, {
@@ -57,11 +57,11 @@ export class QrcodeService {
   }
 
   /**
-   * Membuat QR Code dalam format Buffer (PNG)
-   * Cocok untuk di-download sebagai file PNG
+   * Generate QR Code as Buffer (PNG)
+   * Suitable for downloading as a PNG file
    *
-   * @param documentId ID unik dokumen
-   * @returns Buffer gambar QR Code PNG
+   * @param documentId Unique document ID
+   * @returns QR Code PNG image Buffer
    */
   async generateQRCodeBuffer(documentId: string): Promise<Buffer> {
     const url = this.buildVerificationUrl(documentId);
@@ -81,11 +81,11 @@ export class QrcodeService {
   }
 
   /**
-   * Membuat QR Code dalam format SVG string
-   * Cocok untuk quality cetak tinggi (vektor, tidak pecah)
+   * Generate QR Code as SVG string
+   * Suitable for high-quality printing (vector, no pixelation)
    *
-   * @param documentId ID unik dokumen
-   * @returns SVG string QR Code
+   * @param documentId Unique document ID
+   * @returns QR Code SVG string
    */
   async generateQRCodeSVG(documentId: string): Promise<string> {
     const url = this.buildVerificationUrl(documentId);

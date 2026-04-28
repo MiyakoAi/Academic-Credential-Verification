@@ -5,20 +5,20 @@ import { QrcodeService } from '../qrcode/qrcode.service.js';
 import { RegisterCertificateDto } from './dto/certificate.dto.js';
 
 /**
- * Service utama yang mengorkestrasi seluruh alur registrasi dan verifikasi sertifikat.
+ * Main service that orchestrates the entire certificate registration and verification flow.
  *
- * ALUR REGISTRASI (POST /certificates/register):
- * 1. Admin upload file PDF → Backend upload ke IPFS via Pinata → dapat CID
- * 2. Backend membuat metadata JSON (standar NFT) → upload ke IPFS → dapat metadataURI
- * 3. Backend mengembalikan CID + metadataURI ke frontend
- * 4. Frontend memanggil smart contract registerCertificate() via MetaMask (transaksi blockchain)
- * 5. Setelah transaksi berhasil, frontend request QR Code ke backend
+ * REGISTRATION FLOW (POST /certificates/register):
+ * 1. Admin uploads PDF file → Backend uploads to IPFS via Pinata → gets CID
+ * 2. Backend creates metadata JSON (NFT standard) → uploads to IPFS → gets metadataURI
+ * 3. Backend returns CID + metadataURI to frontend
+ * 4. Frontend calls smart contract registerCertificate() via MetaMask (blockchain transaction)
+ * 5. After successful transaction, frontend requests QR Code from backend
  *
- * ALUR VERIFIKASI (GET /certificates/verify/:documentId):
- * 1. Verifier scan QR Code → buka URL
- * 2. Backend query blockchain via verifyByDocumentId()
- * 3. Backend ambil file dari IPFS gateway
- * 4. Backend return data lengkap + status validitas ke frontend
+ * VERIFICATION FLOW (GET /certificates/verify/:documentId):
+ * 1. Verifier scans QR Code → opens URL
+ * 2. Backend queries blockchain via verifyByDocumentId()
+ * 3. Backend fetches file from IPFS gateway
+ * 4. Backend returns complete data + validity status to frontend
  */
 @Injectable()
 export class CertificateService {
@@ -31,36 +31,36 @@ export class CertificateService {
   ) { }
 
   /**
-   * FASE REGISTRASI - STEP 1: Upload dokumen ke IPFS dan siapkan data untuk blockchain
+   * REGISTRATION PHASE - STEP 1: Upload document to IPFS and prepare data for blockchain
    *
-   * Proses:
-   * 1. Upload file PDF ke IPFS → dapat CID
-   * 2. Buat metadata JSON standar ERC-721 → upload ke IPFS → dapat metadataURI
-   * 3. Return CID + metadataURI ke frontend
-   * 4. Frontend lanjut memanggil smart contract via MetaMask
+   * Process:
+   * 1. Upload PDF file to IPFS → get CID
+   * 2. Create ERC-721 standard metadata JSON → upload to IPFS → get metadataURI
+   * 3. Return CID + metadataURI to frontend
+   * 4. Frontend continues by calling smart contract via MetaMask
    *
-   * @param dto Data sertifikat dari form admin
-   * @param file File dokumen PDF
-   * @returns CID, metadataURI, dan QR Code data
+   * @param dto Certificate data from admin form
+   * @param file PDF document file
+   * @returns CID, metadataURI, and QR Code data
    */
   async prepareRegistration(
     dto: RegisterCertificateDto,
     file: Express.Multer.File,
   ) {
     this.logger.log(
-      `Memulai persiapan registrasi sertifikat: ${dto.documentId}`,
+      `Starting registration preparation for certificate: ${dto.documentId}`,
     );
 
-    // Step 1: Upload file dokumen ke IPFS
-    this.logger.log(`Step 1: Upload dokumen ke IPFS...`);
+    // Step 1: Upload document file to IPFS
+    this.logger.log(`Step 1: Uploading document to IPFS...`);
     const documentUpload = await this.ipfsService.uploadFile(
       file.buffer,
       file.originalname,
       file.mimetype,
     );
 
-    // Step 2: Buat metadata JSON dan upload ke IPFS
-    this.logger.log(`Step 2: Upload metadata ke IPFS...`);
+    // Step 2: Create metadata JSON and upload to IPFS
+    this.logger.log(`Step 2: Uploading metadata to IPFS...`);
     const metadata = this.ipfsService.buildCertificateMetadata({
       documentId: dto.documentId,
       studentName: dto.studentName,
@@ -84,11 +84,11 @@ export class CertificateService {
       this.qrcodeService.buildVerificationUrl(dto.documentId);
 
     this.logger.log(
-      `Persiapan registrasi selesai untuk: ${dto.documentId}`,
+      `Registration preparation complete for: ${dto.documentId}`,
     );
 
     return {
-      // Data untuk frontend memanggil smart contract
+      // Data for frontend to call smart contract
       documentId: dto.documentId,
       ipfsCID: documentUpload.cid,
       studentName: dto.studentName,
@@ -111,33 +111,33 @@ export class CertificateService {
   }
 
   /**
-   * FASE VERIFIKASI - Verifikasi sertifikat dari QR Code scan
+   * VERIFICATION PHASE - Verify certificate from QR Code scan
    *
-   * Proses:
-   * 1. Ambil data dari blockchain berdasarkan documentId
-   * 2. Buat URL gateway untuk mengambil file dari IPFS
-   * 3. Return data lengkap + status ke frontend
+   * Process:
+   * 1. Get data from blockchain by documentId
+   * 2. Create gateway URL to fetch file from IPFS
+   * 3. Return complete data + status to frontend
    *
-   * @param documentId ID dokumen dari QR Code
+   * @param documentId Document ID from QR Code
    */
   async verifyCertificate(documentId: string) {
-    this.logger.log(`Memulai verifikasi sertifikat: ${documentId}`);
+    this.logger.log(`Starting certificate verification: ${documentId}`);
 
     // Step 1: Query blockchain
     const blockchainData =
       await this.blockchainService.verifyByDocumentId(documentId);
 
-    // Step 2: Buat URL gateway IPFS untuk file asli
+    // Step 2: Create IPFS gateway URL for the original file
     const documentUrl = this.ipfsService.getGatewayUrl(
       blockchainData.certificate.ipfsCID,
     );
 
-    // Step 3: Generate QR code (untuk ditampilkan di halaman verifikasi)
+    // Step 3: Generate QR code (to display on verification page)
     const qrCodeDataUrl =
       await this.qrcodeService.generateQRCodeDataURL(documentId);
 
     this.logger.log(
-      `Verifikasi selesai: ${documentId} → ${blockchainData.isValid ? 'VALID' : 'TIDAK VALID'}`,
+      `Verification complete: ${documentId} → ${blockchainData.isValid ? 'VALID' : 'INVALID'}`,
     );
 
     return {
@@ -150,22 +150,22 @@ export class CertificateService {
   }
 
   /**
-   * DEEP VERIFICATION - Verifikasi dengan membandingkan CID
+   * DEEP VERIFICATION - Verify by comparing CID
    *
-   * @param documentId ID dokumen
-   * @param file File yang di-upload untuk dibandingkan
+   * @param documentId Document ID
+   * @param file File uploaded for comparison
    */
   async deepVerify(documentId: string, file: Express.Multer.File) {
-    this.logger.log(`Memulai deep verification: ${documentId}`);
+    this.logger.log(`Starting deep verification: ${documentId}`);
 
-    // Step 1: Upload file ke IPFS untuk mendapatkan CID-nya
+    // Step 1: Upload file to IPFS to get its CID
     const uploadResult = await this.ipfsService.uploadFile(
       file.buffer,
       file.originalname,
       file.mimetype,
     );
 
-    // Step 2: Bandingkan CID dengan blockchain
+    // Step 2: Compare CID with blockchain
     const verifyResult = await this.blockchainService.verifyCertificateWithCID(
       documentId,
       uploadResult.cid,

@@ -27,27 +27,27 @@ export class CertificateController {
   /**
    * POST /certificates/register
    *
-   * Alur: Admin mengirim form data + file PDF
-   * → Backend upload ke IPFS (dapat CID)
-   * → Backend upload metadata ke IPFS (dapat metadataURI)
+   * Process: Admin sends form data + PDF file
+   * → Backend upload to IPFS (get a CID)
+   * → Backend upload metadata to IPFS (get a metadataURI)
    * → Backend generate QR Code
-   * → Return semua data ke frontend
-   * → Frontend memanggil smart contract via MetaMask
+   * → Return all data to frontend
+   * → Frontend calls the smart contract via MetaMask
    */
   @Post('register')
   @ApiOperation({
-    summary: 'Persiapan registrasi sertifikat (Upload ke IPFS + Generate QR)',
+    summary: 'Prepare certificate registration (Upload to IPFS + Generate QR)',
     description: `
-      Endpoint utama untuk FASE REGISTRASI.
+      Main endpoint for the REGISTRATION PHASE.
       
-      Proses:
-      1. Upload file dokumen PDF ke IPFS via Pinata → dapat CID
-      2. Buat metadata JSON standar NFT/SBT → upload ke IPFS → dapat metadataURI
-      3. Generate QR Code berisi URL verifikasi
-      4. Return CID, metadataURI, dan QR Code ke frontend
+      Process:
+      1. Upload PDF document file to IPFS via Pinata → get CID
+      2. Create NFT/SBT standard metadata JSON → upload to IPFS → get metadataURI
+      3. Generate QR Code with verification URL
+      4. Return CID, metadataURI, and QR Code to frontend
       
-      Setelah mendapat response, frontend memanggil registerCertificate() 
-      pada smart contract melalui MetaMask dengan data yang dikembalikan.
+      After receiving the response, frontend calls registerCertificate() 
+      on the smart contract via MetaMask with the returned data.
     `,
   })
   @ApiConsumes('multipart/form-data')
@@ -68,42 +68,42 @@ export class CertificateController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'File dokumen PDF (maks 10MB)',
+          description: 'PDF document file (max 10MB)',
         },
         documentId: {
           type: 'string',
           example: 'UMI-2022-13020220166',
-          description: 'ID unik dokumen',
+          description: 'Unique document ID',
         },
         studentName: {
           type: 'string',
           example: 'Mugni Adji',
-          description: 'Nama lengkap mahasiswa',
+          description: 'Student full name',
         },
         studentId: {
           type: 'string',
           example: '13020220166',
-          description: 'NIM mahasiswa',
+          description: 'Student ID number',
         },
         studentWallet: {
           type: 'string',
           example: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-          description: 'Alamat wallet mahasiswa (penerima SBT)',
+          description: 'Student wallet address (SBT recipient)',
         },
         degree: {
           type: 'string',
           example: 'S1',
-          description: 'Gelar/jenjang',
+          description: 'Degree level',
         },
         major: {
           type: 'string',
           example: 'Teknik Informatika',
-          description: 'Program studi',
+          description: 'Study program',
         },
         issuerName: {
           type: 'string',
           example: 'Universitas Muslim Indonesia',
-          description: 'Nama institusi penerbit',
+          description: 'Issuing institution name',
         },
       },
     },
@@ -123,7 +123,7 @@ export class CertificateController {
         } else {
           callback(
             new BadRequestException(
-              `Format file tidak didukung: ${file.mimetype}`,
+              `Unsupported file format: ${file.mimetype}`,
             ),
             false,
           );
@@ -136,7 +136,7 @@ export class CertificateController {
     @Body() dto: RegisterCertificateDto,
   ) {
     if (!file) {
-      throw new BadRequestException('File dokumen PDF wajib diupload');
+      throw new BadRequestException('PDF document file is required');
     }
 
     const result = await this.certificateService.prepareRegistration(dto, file);
@@ -144,7 +144,7 @@ export class CertificateController {
     return {
       success: true,
       message:
-        'Dokumen berhasil diupload ke IPFS. Silakan lanjutkan registrasi ke blockchain melalui MetaMask.',
+        'Document successfully uploaded to IPFS. Please proceed with blockchain registration via MetaMask.',
       data: result,
     };
   }
@@ -152,24 +152,24 @@ export class CertificateController {
   /**
    * GET /certificates/verify/:documentId
    *
-   * Endpoint utama untuk FASE VERIFIKASI (QR Code scan)
+   * Main endpoint for VERIFICATION PHASE (QR Code scan)
    */
   @Get('verify/:documentId')
   @ApiOperation({
-    summary: 'Verifikasi sertifikat (QR Code Scan)',
+    summary: 'Verify certificate (QR Code Scan)',
     description: `
-      Endpoint utama saat verifier melakukan scan QR Code pada ijazah fisik.
+      Main endpoint when a verifier scans the QR Code on a physical certificate.
       
-      Proses:
-      1. QR Code berisi URL: /verify?id=documentId
-      2. Frontend kirim request ke endpoint ini
-      3. Backend query blockchain + ambil data IPFS
-      4. Return status validitas + data sertifikat
+      Process:
+      1. QR Code contains URL: /verify?id=documentId
+      2. Frontend sends request to this endpoint
+      3. Backend queries blockchain + fetches IPFS data
+      4. Returns validity status + certificate data
     `,
   })
   @ApiParam({
     name: 'documentId',
-    description: 'ID unik dokumen dari QR Code',
+    description: 'Unique document ID from QR Code',
     example: 'UMI-2022-13020220166',
   })
   async verify(@Param('documentId') documentId: string) {
@@ -180,15 +180,15 @@ export class CertificateController {
       return {
         success: true,
         message: result.isValid
-          ? 'Dokumen VALID — Sertifikat ini terdaftar dan terverifikasi di blockchain'
-          : 'Dokumen TIDAK VALID — Sertifikat ini telah dicabut',
+          ? 'Document is VALID — This certificate is registered and verified on the blockchain'
+          : 'Document is INVALID — This certificate has been revoked',
         data: result,
       };
     } catch (error) {
       return {
         success: false,
         message:
-          'Dokumen TIDAK DITEMUKAN — ID dokumen ini tidak terdaftar di blockchain',
+          'Document NOT FOUND — This document ID is not registered on the blockchain',
         error: error.message,
       };
     }
@@ -197,20 +197,20 @@ export class CertificateController {
   /**
    * POST /certificates/verify-deep/:documentId
    *
-   * Deep verification: upload file untuk membandingkan CID
+   * Deep verification: upload file to compare CID
    */
   @Post('verify-deep/:documentId')
   @ApiOperation({
-    summary: 'Deep verification: upload file untuk verifikasi keaslian',
+    summary: 'Deep verification: upload file to verify authenticity',
     description: `
-      Verifikator mengupload file softcopy dokumen.
-      Sistem menghitung CID file tersebut dan membandingkan dengan CID di blockchain.
-      Jika cocok → dokumen asli. Jika tidak cocok → dokumen telah dimodifikasi.
+      Verifier uploads the softcopy document file.
+      The system calculates the CID of that file and compares it with the CID on the blockchain.
+      If matched → document is authentic. If not matched → document has been modified.
     `,
   })
   @ApiParam({
     name: 'documentId',
-    description: 'ID unik dokumen',
+    description: 'Unique document ID',
     example: 'UMI-2022-13020220166',
   })
   @ApiConsumes('multipart/form-data')
@@ -221,7 +221,7 @@ export class CertificateController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'File dokumen untuk diverifikasi',
+          description: 'Document file to verify',
         },
       },
     },
@@ -236,7 +236,7 @@ export class CertificateController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
-      throw new BadRequestException('File dokumen wajib diupload untuk verifikasi');
+      throw new BadRequestException('Document file is required for verification');
     }
 
     try {
@@ -245,13 +245,13 @@ export class CertificateController {
       let message: string;
       if (result.isValid && result.isMatching) {
         message =
-          'Dokumen VALID dan ASLI — File ini identik dengan dokumen yang terdaftar di blockchain';
+          'Document is VALID and AUTHENTIC — This file is identical to the document registered on the blockchain';
       } else if (result.isValid && !result.isMatching) {
         message =
-          'PERHATIAN — Dokumen terdaftar tapi file ini BERBEDA dengan yang tersimpan di blockchain. Kemungkinan telah dimodifikasi!';
+          'WARNING — Document is registered but this file DIFFERS from the one stored on the blockchain. It may have been modified!';
       } else {
         message =
-          'Dokumen TIDAK VALID — Sertifikat ini telah dicabut dari blockchain';
+          'Document is INVALID — This certificate has been revoked from the blockchain';
       }
 
       return {
@@ -262,7 +262,7 @@ export class CertificateController {
     } catch (error) {
       return {
         success: false,
-        message: 'Dokumen tidak ditemukan di blockchain',
+        message: 'Document not found on the blockchain',
         error: error.message,
       };
     }

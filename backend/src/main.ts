@@ -15,7 +15,7 @@ async function bootstrap() {
     }),
   );
 
-  // CORS - izinkan frontend mengakses backend
+  // CORS - allow frontend to access backend
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -26,13 +26,13 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Academic Certificate Verification API')
     .setDescription(
-      'API untuk sistem verifikasi dokumen akademik berbasis blockchain (SBT) dengan IPFS storage',
+      'API for blockchain-based academic document verification system (SBT) with IPFS storage',
     )
     .setVersion('1.0')
-    .addTag('certificates', 'Manajemen sertifikat akademik')
-    .addTag('ipfs', 'Upload dan manajemen file IPFS')
-    .addTag('blockchain', 'Interaksi dengan smart contract')
-    .addTag('qrcode', 'Pembuatan QR Code')
+    .addTag('certificates', 'Academic certificate management')
+    .addTag('ipfs', 'IPFS file upload and management')
+    .addTag('blockchain', 'Smart contract interaction')
+    .addTag('qrcode', 'QR Code generation')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -41,7 +41,7 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
   console.log(`Hello Sekai! >_<`);
-  console.log(`Backend API berjalan di: http://localhost:${port}`);
+  console.log(`Backend API running at: http://localhost:${port}`);
   console.log(`Swagger API Docs: http://localhost:${port}/api`);
 }
 bootstrap();

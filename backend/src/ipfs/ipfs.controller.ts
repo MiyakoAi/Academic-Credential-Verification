@@ -15,14 +15,14 @@ export class IpfsController {
   constructor(private readonly ipfsService: IpfsService) {}
 
   /**
-   * Endpoint untuk upload file dokumen ke IPFS
+   * Endpoint for uploading document files to IPFS
    * POST /ipfs/upload
    */
   @Post('upload')
   @ApiOperation({
-    summary: 'Upload file dokumen ke IPFS',
+    summary: 'Upload document file to IPFS',
     description:
-      'Mengupload file (PDF/gambar) ke IPFS melalui Pinata dan mengembalikan CID',
+      'Upload file (PDF/image) to IPFS via Pinata and return the CID',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -32,7 +32,7 @@ export class IpfsController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'File dokumen (PDF, maks 10MB)',
+          description: 'Document file (PDF, max 10MB)',
         },
       },
     },
@@ -40,10 +40,10 @@ export class IpfsController {
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
-        fileSize: 10 * 1024 * 1024, // Maks 10MB
+        fileSize: 10 * 1024 * 1024, // Max 10MB
       },
       fileFilter: (_req, file, callback) => {
-        // Hanya izinkan PDF dan gambar
+        // Only allow PDF and images
         const allowedMimes = [
           'application/pdf',
           'image/png',
@@ -55,7 +55,7 @@ export class IpfsController {
         } else {
           callback(
             new BadRequestException(
-              `Format file tidak didukung: ${file.mimetype}. Gunakan PDF, PNG, atau JPG.`,
+              `Unsupported file format: ${file.mimetype}. Use PDF, PNG, or JPG.`,
             ),
             false,
           );
@@ -65,7 +65,7 @@ export class IpfsController {
   )
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
-      throw new BadRequestException('File tidak ditemukan dalam request');
+      throw new BadRequestException('File not found in the request');
     }
 
     const result = await this.ipfsService.uploadFile(
@@ -76,7 +76,7 @@ export class IpfsController {
 
     return {
       success: true,
-      message: 'File berhasil diupload ke IPFS',
+      message: 'File successfully uploaded to IPFS',
       data: {
         cid: result.cid,
         fileName: file.originalname,

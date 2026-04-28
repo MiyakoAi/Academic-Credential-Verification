@@ -6,21 +6,21 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 /**
  * @title AcademicCertificate (Soulbound Token / SBT)
- * @author Tugas Akhir - Teknik Informatika
- * @notice Smart contract untuk verifikasi dokumen akademik berbasis blockchain
- *         menggunakan Soulbound Token (SBT) - NFT yang TIDAK dapat ditransfer.
+ * @author Abd. Mugni Adji Susilo - Universitas Muslim Indonesia
+ * @notice Smart contract for blockchain-based academic document verification
+ *         using Soulbound Token (SBT) - a non-transferable NFT.
  *
- * @dev Inherit dari ERC-721 dengan modifikasi:
- *      - Token TIDAK bisa di-transfer (Soulbound)
- *      - Token TIDAK bisa di-approve untuk pihak lain
- *      - Token hanya bisa di-mint oleh Authorized Issuer
- *      - Token bisa di-burn (revoke) oleh Issuer asli atau Owner
+ * @dev Inherits from ERC-721 with modifications:
+ *      - Token CANNOT be transferred (Soulbound)
+ *      - Token CANNOT be approved to third parties
+ *      - Token can only be minted by Authorized Issuers
+ *      - Token can be burned (revoked) by the original Issuer or Owner
  *
- * Alur Kerja:
- * 1. Owner (admin sistem) mendaftarkan Issuer (universitas/institusi).
- * 2. Issuer mendaftarkan sertifikat → SBT di-mint ke wallet mahasiswa.
- * 3. Pihak ketiga memverifikasi via QR Code / documentId.
- * 4. Issuer/Owner bisa revoke (burn) sertifikat jika diperlukan.
+ * Workflow:
+ * 1. Owner (system admin) registers an Issuer (university/institution).
+ * 2. Issuer registers a certificate → SBT is minted to the student's wallet.
+ * 3. Third parties verify via QR Code / documentId.
+ * 4. Issuer/Owner can revoke (burn) the certificate if necessary.
  */
 contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
@@ -28,19 +28,19 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Struktur data untuk menyimpan informasi sertifikat akademik
-     * @param documentId ID unik dokumen (format: UNIV-TAHUN-NOMOR)
-     * @param ipfsCID Content Identifier dari IPFS (hash file dokumen)
-     * @param studentName Nama mahasiswa pemilik dokumen
-     * @param studentId NIM (Nomor Induk Mahasiswa)
-     * @param studentWallet Alamat wallet mahasiswa (penerima SBT)
-     * @param degree Gelar/jenjang pendidikan (S1, S2, S3, dll)
-     * @param major Program studi / jurusan
-     * @param issuerAddress Alamat wallet institusi yang menerbitkan
-     * @param issuerName Nama institusi penerbit
-     * @param issuedAt Timestamp saat sertifikat didaftarkan
-     * @param isValid Status validitas sertifikat (true = valid, false = revoked)
-     * @param exists Flag untuk mengecek apakah data ada di mapping
+     * @notice Data structure for storing academic certificate information
+     * @param documentId Unique document ID (format: UNIV-YEAR-NUMBER)
+     * @param ipfsCID Content Identifier from IPFS (document file hash)
+     * @param studentName Name of the student who owns the document
+     * @param studentId Student ID number
+     * @param studentWallet Student's wallet address (SBT recipient)
+     * @param degree Education level (Bachelor, Master, Doctorate, etc.)
+     * @param major Study program / major
+     * @param issuerAddress Wallet address of the issuing institution
+     * @param issuerName Name of the issuing institution
+     * @param issuedAt Timestamp when the certificate was registered
+     * @param isValid Certificate validity status (true = valid, false = revoked)
+     * @param exists Flag to check if data exists in the mapping
      */
     struct Certificate {
         string documentId;
@@ -61,10 +61,10 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     //                      STATE VARIABLES
     // ============================================================
 
-    /// @notice Alamat pemilik contract (admin utama sistem)
+    /// @notice Contract owner address (main system admin)
     address public owner;
 
-    /// @notice Counter untuk tokenId (auto-increment)
+    /// @notice Counter for tokenId (auto-increment)
     uint256 private _nextTokenId;
 
     /// @notice Mapping documentId => Certificate data
@@ -76,23 +76,23 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     /// @notice Mapping tokenId => documentId
     mapping(uint256 => string) public tokenToDocumentId;
 
-    /// @notice Mapping alamat => status issuer (true = authorized)
+    /// @notice Mapping address => issuer status (true = authorized)
     mapping(address => bool) public authorizedIssuers;
 
-    /// @notice Mapping alamat issuer => nama institusi
+    /// @notice Mapping issuer address => institution name
     mapping(address => string) public issuerNames;
 
-    /// @notice Array untuk menyimpan semua documentId yang terdaftar
+    /// @notice Array to store all registered documentIds
     string[] public documentIds;
 
-    /// @notice Total jumlah sertifikat yang terdaftar
+    /// @notice Total number of registered certificates
     uint256 public totalCertificates;
 
     // ============================================================
     //                          EVENTS
     // ============================================================
 
-    /// @notice Event ketika sertifikat baru didaftarkan (SBT di-mint)
+    /// @notice Event when a new certificate is registered (SBT minted)
     event CertificateRegistered(
         string indexed documentId,
         uint256 indexed tokenId,
@@ -104,7 +104,7 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
         uint256 timestamp
     );
 
-    /// @notice Event ketika sertifikat dicabut/direvoke (SBT di-burn)
+    /// @notice Event when a certificate is revoked (SBT burned)
     event CertificateRevoked(
         string indexed documentId,
         uint256 indexed tokenId,
@@ -112,20 +112,17 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
         uint256 timestamp
     );
 
-    /// @notice Event ketika issuer baru ditambahkan
+    /// @notice Event when a new issuer is added
     event IssuerAdded(
         address indexed issuerAddress,
         string issuerName,
         uint256 timestamp
     );
 
-    /// @notice Event ketika issuer dihapus
-    event IssuerRemoved(
-        address indexed issuerAddress,
-        uint256 timestamp
-    );
+    /// @notice Event when an issuer is removed
+    event IssuerRemoved(address indexed issuerAddress, uint256 timestamp);
 
-    /// @notice Event ketika verifikasi dilakukan
+    /// @notice Event when verification is performed
     event CertificateVerified(
         string indexed documentId,
         address indexed verifier,
@@ -137,35 +134,38 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     //                        MODIFIERS
     // ============================================================
 
-    /// @notice Hanya pemilik contract yang bisa mengakses
+    /// @notice Only the contract owner can access
     modifier onlyOwner() {
-        require(msg.sender == owner, "Hanya owner yang dapat mengakses fungsi ini");
+        require(
+            msg.sender == owner,
+            "Only the owner can access this function"
+        );
         _;
     }
 
-    /// @notice Hanya issuer yang berwenang yang bisa mengakses
+    /// @notice Only authorized issuers can access
     modifier onlyAuthorizedIssuer() {
         require(
             authorizedIssuers[msg.sender],
-            "Hanya issuer yang berwenang yang dapat mengakses fungsi ini"
+            "Only authorized issuers can access this function"
         );
         _;
     }
 
-    /// @notice Memastikan documentId belum terdaftar
+    /// @notice Ensure documentId is not yet registered
     modifier documentNotExists(string memory _documentId) {
         require(
             !certificates[_documentId].exists,
-            "Dokumen dengan ID ini sudah terdaftar"
+            "Document with this ID is already registered"
         );
         _;
     }
 
-    /// @notice Memastikan documentId sudah terdaftar
+    /// @notice Ensure documentId is already registered
     modifier documentExists(string memory _documentId) {
         require(
             certificates[_documentId].exists,
-            "Dokumen dengan ID ini tidak ditemukan"
+            "Document with this ID was not found"
         );
         _;
     }
@@ -175,12 +175,12 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Inisialisasi contract sebagai ERC-721 Soulbound Token
+     * @notice Initialize contract as ERC-721 Soulbound Token
      * @dev Token name: "Academic Certificate SBT", symbol: "ACSBT"
      */
     constructor() ERC721("Academic Certificate SBT", "ACSBT") {
         owner = msg.sender;
-        _nextTokenId = 1; // Token ID dimulai dari 1
+        _nextTokenId = 1; // Token ID starts from 1
     }
 
     // ============================================================
@@ -188,9 +188,9 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Override _update untuk mencegah transfer token (Soulbound)
-     * @dev Hanya mengizinkan minting (from == address(0)) dan
-     *      burning (to == address(0)). Transfer antar wallet DILARANG.
+     * @notice Override _update to prevent token transfers (Soulbound)
+     * @dev Only allows minting (from == address(0)) and
+     *      burning (to == address(0)). Wallet-to-wallet transfers are BLOCKED.
      */
     function _update(
         address to,
@@ -199,34 +199,34 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     ) internal override(ERC721) returns (address) {
         address from = _ownerOf(tokenId);
 
-        // Izinkan hanya mint (from == 0) dan burn (to == 0)
+        // Allow only mint (from == 0) and burn (to == 0)
         if (from != address(0) && to != address(0)) {
-            revert("Soulbound Token: token tidak dapat ditransfer");
+            revert("Soulbound Token: token is non-transferable");
         }
 
         return super._update(to, tokenId, auth);
     }
 
     /**
-     * @notice Override approve untuk mencegah approval (Soulbound)
-     * @dev SBT tidak dapat di-approve untuk pihak lain
+     * @notice Override approve to prevent approval (Soulbound)
+     * @dev SBT cannot be approved to third parties
      */
     function approve(
         address /* to */,
         uint256 /* tokenId */
     ) public pure override(ERC721, IERC721) {
-        revert("Soulbound Token: approval tidak diizinkan");
+        revert("Soulbound Token: approval is not allowed");
     }
 
     /**
-     * @notice Override setApprovalForAll untuk mencegah operator approval
-     * @dev SBT tidak dapat di-approve untuk operator
+     * @notice Override setApprovalForAll to prevent operator approval
+     * @dev SBT cannot be approved for operators
      */
     function setApprovalForAll(
         address /* operator */,
         bool /* approved */
     ) public pure override(ERC721, IERC721) {
-        revert("Soulbound Token: approval tidak diizinkan");
+        revert("Soulbound Token: approval is not allowed");
     }
 
     // ============================================================
@@ -234,17 +234,20 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Menambahkan issuer baru yang berwenang menerbitkan sertifikat
-     * @param _issuerAddress Alamat wallet issuer
-     * @param _issuerName Nama institusi penerbit
+     * @notice Add a new authorized issuer for certificate issuance
+     * @param _issuerAddress Issuer's wallet address
+     * @param _issuerName Name of the issuing institution
      */
     function addIssuer(
         address _issuerAddress,
         string memory _issuerName
     ) external onlyOwner {
-        require(_issuerAddress != address(0), "Alamat issuer tidak valid");
-        require(bytes(_issuerName).length > 0, "Nama issuer tidak boleh kosong");
-        require(!authorizedIssuers[_issuerAddress], "Issuer sudah terdaftar");
+        require(_issuerAddress != address(0), "Invalid issuer address");
+        require(
+            bytes(_issuerName).length > 0,
+            "Issuer name cannot be empty"
+        );
+        require(!authorizedIssuers[_issuerAddress], "Issuer is already registered");
 
         authorizedIssuers[_issuerAddress] = true;
         issuerNames[_issuerAddress] = _issuerName;
@@ -253,11 +256,11 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     }
 
     /**
-     * @notice Menghapus issuer dari daftar yang berwenang
-     * @param _issuerAddress Alamat wallet issuer yang akan dihapus
+     * @notice Remove an issuer from the authorized list
+     * @param _issuerAddress Wallet address of the issuer to remove
      */
     function removeIssuer(address _issuerAddress) external onlyOwner {
-        require(authorizedIssuers[_issuerAddress], "Issuer tidak ditemukan");
+        require(authorizedIssuers[_issuerAddress], "Issuer not found");
 
         authorizedIssuers[_issuerAddress] = false;
         delete issuerNames[_issuerAddress];
@@ -270,17 +273,17 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Mendaftarkan sertifikat akademik dan mint SBT ke wallet mahasiswa
-     * @dev Hanya bisa dipanggil oleh issuer yang sudah di-authorize.
-     *      Proses: menyimpan data → mint SBT → set tokenURI ke IPFS metadata.
-     * @param _documentId ID unik dokumen (format: UNIV-TAHUN-NOMOR)
-     * @param _ipfsCID Content Identifier dari IPFS (hash file dokumen)
-     * @param _studentName Nama lengkap mahasiswa
-     * @param _studentId NIM mahasiswa
-     * @param _studentWallet Alamat wallet mahasiswa (penerima SBT)
-     * @param _degree Gelar/jenjang (S1, S2, S3, D3, dll)
-     * @param _major Program studi / jurusan
-     * @param _metadataURI URI metadata token (IPFS URI untuk metadata JSON)
+     * @notice Register an academic certificate and mint SBT to the student's wallet
+     * @dev Can only be called by an authorized issuer.
+     *      Process: store data → mint SBT → set tokenURI to IPFS metadata.
+     * @param _documentId Unique document ID (format: UNIV-YEAR-NUMBER)
+     * @param _ipfsCID Content Identifier from IPFS (document file hash)
+     * @param _studentName Student's full name
+     * @param _studentId Student ID number
+     * @param _studentWallet Student's wallet address (SBT recipient)
+     * @param _degree Degree level (S1, S2, S3, D3, etc.)
+     * @param _major Study program / major
+     * @param _metadataURI Token metadata URI (IPFS URI for metadata JSON)
      */
     function registerCertificate(
         string memory _documentId,
@@ -292,20 +295,29 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
         string memory _major,
         string memory _metadataURI
     ) external onlyAuthorizedIssuer documentNotExists(_documentId) {
-        // Validasi input
-        require(bytes(_documentId).length > 0, "Document ID tidak boleh kosong");
-        require(bytes(_ipfsCID).length > 0, "IPFS CID tidak boleh kosong");
-        require(bytes(_studentName).length > 0, "Nama mahasiswa tidak boleh kosong");
-        require(bytes(_studentId).length > 0, "NIM tidak boleh kosong");
-        require(_studentWallet != address(0), "Alamat wallet mahasiswa tidak valid");
-        require(bytes(_degree).length > 0, "Gelar tidak boleh kosong");
-        require(bytes(_major).length > 0, "Jurusan tidak boleh kosong");
+        // Input validation
+        require(
+            bytes(_documentId).length > 0,
+            "Document ID cannot be empty"
+        );
+        require(bytes(_ipfsCID).length > 0, "IPFS CID cannot be empty");
+        require(
+            bytes(_studentName).length > 0,
+            "Student name cannot be empty"
+        );
+        require(bytes(_studentId).length > 0, "Student ID cannot be empty");
+        require(
+            _studentWallet != address(0),
+            "Invalid student wallet address"
+        );
+        require(bytes(_degree).length > 0, "Degree cannot be empty");
+        require(bytes(_major).length > 0, "Major cannot be empty");
 
         // Generate tokenId
         uint256 tokenId = _nextTokenId;
         _nextTokenId++;
 
-        // Simpan data sertifikat
+        // Store certificate data
         certificates[_documentId] = Certificate({
             documentId: _documentId,
             ipfsCID: _ipfsCID,
@@ -321,20 +333,20 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
             exists: true
         });
 
-        // Simpan mapping dua arah: documentId <-> tokenId
+        // Store bidirectional mapping: documentId <-> tokenId
         documentToTokenId[_documentId] = tokenId;
         tokenToDocumentId[tokenId] = _documentId;
 
-        // Simpan documentId ke array
+        // Store documentId to array
         documentIds.push(_documentId);
 
         // Increment counter
         totalCertificates++;
 
-        // Mint SBT ke wallet mahasiswa
+        // Mint SBT to student's wallet
         _safeMint(_studentWallet, tokenId);
 
-        // Set token URI (metadata IPFS)
+        // Set token URI (IPFS metadata)
         if (bytes(_metadataURI).length > 0) {
             _setTokenURI(tokenId, _metadataURI);
         }
@@ -357,12 +369,12 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Mengambil data sertifikat berdasarkan documentId
-     * @dev Fungsi ini bersifat view (read-only, tanpa gas fee).
-     *      Mengembalikan struct Certificate secara langsung.
-     * @param _documentId ID unik dokumen
-     * @return cert Data sertifikat lengkap
-     * @return tokenId ID token SBT
+     * @notice Retrieve certificate data by documentId
+     * @dev This is a view function (read-only, no gas fee).
+     *      Returns the Certificate struct directly.
+     * @param _documentId Unique document ID
+     * @return cert Complete certificate data
+     * @return tokenId SBT token ID
      */
     function getCertificate(
         string memory _documentId
@@ -381,16 +393,16 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Memverifikasi validitas sertifikat dan membandingkan CID
-     * @dev Membandingkan CID di blockchain dengan CID yang diberikan.
-     *      Juga mengecek apakah SBT masih ada di wallet mahasiswa.
-     * @param _documentId ID unik dokumen
-     * @param _ipfsCID CID yang ingin diverifikasi
-     * @return isValid Apakah sertifikat masih valid
-     * @return isMatching Apakah CID cocok
-     * @return cert Data sertifikat lengkap
-     * @return tokenId Token ID SBT
-     * @return tokenOwner Pemilik token saat ini
+     * @notice Verify certificate validity and compare CID
+     * @dev Compares the CID stored on blockchain with the provided CID.
+     *      Also checks if the SBT still exists in the student's wallet.
+     * @param _documentId Unique document ID
+     * @param _ipfsCID CID to verify against
+     * @return isValid Whether the certificate is still valid
+     * @return isMatching Whether the CID matches
+     * @return cert Complete certificate data
+     * @return tokenId SBT Token ID
+     * @return tokenOwner Current token owner
      */
     function verifyCertificate(
         string memory _documentId,
@@ -409,17 +421,17 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
         Certificate storage storedCert = certificates[_documentId];
         uint256 _tokenId = documentToTokenId[_documentId];
 
-        // Bandingkan CID
+        // Compare CID
         bool cidMatch = keccak256(abi.encodePacked(storedCert.ipfsCID)) ==
             keccak256(abi.encodePacked(_ipfsCID));
 
-        // Cek pemilik token (address(0) jika sudah di-burn/revoke)
+        // Check token owner (address(0) if burned/revoked)
         address _tokenOwner = address(0);
         if (storedCert.isValid) {
             _tokenOwner = ownerOf(_tokenId);
         }
 
-        // Emit event verifikasi
+        // Emit verification event
         emit CertificateVerified(
             _documentId,
             msg.sender,
@@ -437,12 +449,12 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     }
 
     /**
-     * @notice Verifikasi sederhana berdasarkan documentId (QR Code scan)
-     * @dev Digunakan saat scan QR Code - tanpa gas fee (view function).
-     *      Mengembalikan struct Certificate secara langsung.
-     * @param _documentId ID unik dokumen
-     * @return cert Data sertifikat lengkap
-     * @return tokenId Token ID SBT
+     * @notice Simple verification by documentId (QR Code scan)
+     * @dev Used when scanning QR Code - no gas fee (view function).
+     *      Returns the Certificate struct directly.
+     * @param _documentId Unique document ID
+     * @return cert Complete certificate data
+     * @return tokenId SBT Token ID
      */
     function verifyByDocumentId(
         string memory _documentId
@@ -461,32 +473,37 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Mencabut sertifikat dan membakar (burn) SBT
-     * @dev Hanya issuer asli atau owner yang bisa revoke.
-     *      Token SBT akan di-burn dari wallet mahasiswa.
-     * @param _documentId ID unik dokumen yang akan di-revoke
+     * @notice Revoke a certificate and burn the SBT
+     * @dev Only the original issuer or the owner can revoke.
+     *      The SBT will be burned from the student's wallet.
+     * @param _documentId Unique document ID to revoke
      */
     function revokeCertificate(
         string memory _documentId
     ) external documentExists(_documentId) {
         Certificate storage cert = certificates[_documentId];
 
-        // Hanya issuer asli atau owner yang bisa revoke
+        // Only the original issuer or owner can revoke
         require(
             msg.sender == cert.issuerAddress || msg.sender == owner,
-            "Hanya issuer asli atau owner yang dapat mencabut sertifikat"
+            "Only the original issuer or owner can revoke a certificate"
         );
 
-        require(cert.isValid, "Sertifikat sudah di-revoke sebelumnya");
+        require(cert.isValid, "Certificate has already been revoked");
 
-        // Set status invalid
+        // Set status to invalid
         cert.isValid = false;
 
         // Burn SBT
         uint256 tokenId = documentToTokenId[_documentId];
         _burn(tokenId);
 
-        emit CertificateRevoked(_documentId, tokenId, msg.sender, block.timestamp);
+        emit CertificateRevoked(
+            _documentId,
+            tokenId,
+            msg.sender,
+            block.timestamp
+        );
     }
 
     // ============================================================
@@ -494,9 +511,9 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Mengecek apakah sebuah documentId sudah terdaftar
-     * @param _documentId ID unik dokumen
-     * @return exists Apakah dokumen terdaftar
+     * @notice Check if a documentId is already registered
+     * @param _documentId Unique document ID
+     * @return exists Whether the document is registered
      */
     function certificateExists(
         string memory _documentId
@@ -505,28 +522,33 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     }
 
     /**
-     * @notice Mengambil CID dari sebuah sertifikat
-     * @param _documentId ID unik dokumen
-     * @return ipfsCID CID yang tersimpan
+     * @notice Get the CID of a certificate
+     * @param _documentId Unique document ID
+     * @return ipfsCID The stored CID
      */
     function getCID(
         string memory _documentId
-    ) external view documentExists(_documentId) returns (string memory ipfsCID) {
+    )
+        external
+        view
+        documentExists(_documentId)
+        returns (string memory ipfsCID)
+    {
         return certificates[_documentId].ipfsCID;
     }
 
     /**
-     * @notice Mengambil daftar semua documentId yang terdaftar
-     * @return Array dari semua documentId
+     * @notice Get a list of all registered documentIds
+     * @return Array of all documentIds
      */
     function getAllDocumentIds() external view returns (string[] memory) {
         return documentIds;
     }
 
     /**
-     * @notice Mengambil tokenId berdasarkan documentId
-     * @param _documentId ID unik dokumen
-     * @return tokenId ID token SBT
+     * @notice Get tokenId by documentId
+     * @param _documentId Unique document ID
+     * @return tokenId SBT Token ID
      */
     function getTokenId(
         string memory _documentId
@@ -535,23 +557,26 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     }
 
     /**
-     * @notice Mengambil documentId berdasarkan tokenId
-     * @param _tokenId ID token SBT
-     * @return documentId ID dokumen
+     * @notice Get documentId by tokenId
+     * @param _tokenId SBT Token ID
+     * @return documentId Document ID
      */
     function getDocumentId(
         uint256 _tokenId
     ) external view returns (string memory) {
-        require(bytes(tokenToDocumentId[_tokenId]).length > 0, "Token tidak ditemukan");
+        require(
+            bytes(tokenToDocumentId[_tokenId]).length > 0,
+            "Token not found"
+        );
         return tokenToDocumentId[_tokenId];
     }
 
     /**
-     * @notice Transfer kepemilikan contract ke alamat baru
-     * @param _newOwner Alamat owner baru
+     * @notice Transfer contract ownership to a new address
+     * @param _newOwner New owner address
      */
     function transferOwnership(address _newOwner) external onlyOwner {
-        require(_newOwner != address(0), "Alamat owner baru tidak valid");
+        require(_newOwner != address(0), "Invalid new owner address");
         owner = _newOwner;
     }
 
@@ -560,7 +585,7 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     // ============================================================
 
     /**
-     * @notice Override tokenURI untuk ERC721URIStorage
+     * @notice Override tokenURI for ERC721URIStorage
      */
     function tokenURI(
         uint256 tokenId
@@ -569,7 +594,7 @@ contract AcademicCertificate is ERC721, ERC721URIStorage {
     }
 
     /**
-     * @notice Override supportsInterface untuk ERC721URIStorage
+     * @notice Override supportsInterface for ERC721URIStorage
      */
     function supportsInterface(
         bytes4 interfaceId

@@ -3,12 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { PinataSDK } from 'pinata';
 
 /**
- * Service untuk mengelola interaksi dengan IPFS melalui Pinata SDK.
+ * Service for managing interaction with IPFS through Pinata SDK.
  *
- * Tugas utama:
- * 1. Mengunggah file dokumen (PDF) ke IPFS → mendapatkan CID
- * 2. Mengunggah metadata JSON (standar NFT/SBT) ke IPFS → mendapatkan metadata URI
- * 3. Mengambil file dari IPFS menggunakan CID
+ * Main tasks:
+ * 1. Upload document files (PDF) to IPFS → get CID
+ * 2. Upload metadata JSON (NFT/SBT standard) to IPFS → get metadata URI
+ * 3. Retrieve files from IPFS using CID
  */
 @Injectable()
 export class IpfsService implements OnModuleInit {
@@ -24,7 +24,7 @@ export class IpfsService implements OnModuleInit {
 
     if (!jwt) {
       this.logger.warn(
-        'PINATA_JWT belum dikonfigurasi. IPFS upload tidak akan berfungsi.',
+        'PINATA_JWT is not configured. IPFS upload will not work.',
       );
     }
 
@@ -35,14 +35,14 @@ export class IpfsService implements OnModuleInit {
       pinataGateway: this.gatewayUrl,
     });
 
-    this.logger.log(`Pinata IPFS Service siap (Gateway: ${this.gatewayUrl})`);
+    this.logger.log(`Pinata IPFS Service ready (Gateway: ${this.gatewayUrl})`);
   }
 
   /**
-   * Upload file dokumen (PDF/gambar) ke IPFS via Pinata
-   * @param file File buffer dari multer
-   * @param fileName Nama file asli
-   * @returns Object berisi CID dan URL gateway
+   * Upload document file (PDF/image) to IPFS via Pinata
+   * @param file File buffer from multer
+   * @param fileName Original file name
+   * @returns Object containing CID and gateway URL
    */
   async uploadFile(
     fileBuffer: Buffer,
@@ -50,50 +50,50 @@ export class IpfsService implements OnModuleInit {
     mimeType: string,
   ): Promise<{ cid: string; gatewayUrl: string }> {
     try {
-      this.logger.log(`Mengupload file ke IPFS: ${fileName}`);
+      this.logger.log(`Uploading file to IPFS: ${fileName}`);
 
-      // Buat File object dari buffer
+      // Create File object from buffer
       const file = new File([new Uint8Array(fileBuffer)], fileName, { type: mimeType });
 
-      // Upload ke Pinata
+      // Upload to Pinata
       const result = await this.pinata.upload.public.file(file);
 
       const cid = result.cid;
       const url = `https://${this.gatewayUrl}/ipfs/${cid}`;
 
-      this.logger.log(`File berhasil diupload ke IPFS. CID: ${cid}`);
+      this.logger.log(`File successfully uploaded to IPFS. CID: ${cid}`);
 
       return {
         cid,
         gatewayUrl: url,
       };
     } catch (error) {
-      this.logger.error(`Gagal upload file ke IPFS: ${error.message}`);
+      this.logger.error(`Failed to upload file to IPFS: ${error.message}`);
       throw error;
     }
   }
 
   /**
-   * Upload metadata JSON (standar NFT/SBT) ke IPFS via Pinata
+   * Upload metadata JSON (NFT/SBT standard) to IPFS via Pinata
    *
-   * Format metadata mengikuti standar ERC-721 metadata:
+   * Metadata format follows the ERC-721 metadata standard:
    * {
-   *   "name": "Ijazah - Budi Santoso",
-   *   "description": "Sertifikat akademik S1 Teknik Informatika",
-   *   "image": "ipfs://<CID_dokumen>",
+   *   "name": "Academic Certificate - Student Name",
+   *   "description": "Academic certificate S1 Informatics Engineering",
+   *   "image": "ipfs://<document_CID>",
    *   "attributes": [ ... ]
    * }
    *
-   * @param metadata Object metadata yang akan disimpan
-   * @param name Nama untuk file metadata
-   * @returns Object berisi CID metadata dan URI (ipfs://...)
+   * @param metadata Metadata object to store
+   * @param name Name for the metadata file
+   * @returns Object containing metadata CID and URI (ipfs://...)
    */
   async uploadMetadata(
     metadata: Record<string, unknown>,
     name: string,
   ): Promise<{ cid: string; metadataUri: string; gatewayUrl: string }> {
     try {
-      this.logger.log(`Mengupload metadata ke IPFS: ${name}`);
+      this.logger.log(`Uploading metadata to IPFS: ${name}`);
 
       const result = await this.pinata.upload.public.json(metadata);
 
@@ -101,7 +101,7 @@ export class IpfsService implements OnModuleInit {
       const metadataUri = `ipfs://${cid}`;
       const url = `https://${this.gatewayUrl}/ipfs/${cid}`;
 
-      this.logger.log(`Metadata berhasil diupload ke IPFS. CID: ${cid}`);
+      this.logger.log(`Metadata successfully uploaded to IPFS. CID: ${cid}`);
 
       return {
         cid,
@@ -109,24 +109,24 @@ export class IpfsService implements OnModuleInit {
         gatewayUrl: url,
       };
     } catch (error) {
-      this.logger.error(`Gagal upload metadata ke IPFS: ${error.message}`);
+      this.logger.error(`Failed to upload metadata to IPFS: ${error.message}`);
       throw error;
     }
   }
 
   /**
-   * Mendapatkan URL gateway untuk mengakses file dari IPFS
+   * Get gateway URL for accessing files from IPFS
    * @param cid Content Identifier
-   * @returns URL lengkap ke file di gateway
+   * @returns Full URL to file on gateway
    */
   getGatewayUrl(cid: string): string {
     return `https://${this.gatewayUrl}/ipfs/${cid}`;
   }
 
   /**
-   * Membuat metadata JSON standar ERC-721 untuk SBT akademik
-   * @param params Parameter metadata sertifikat
-   * @returns Object metadata sesuai standar
+   * Build standard ERC-721 metadata JSON for academic SBT
+   * @param params Certificate metadata parameters
+   * @returns Metadata object following the standard
    */
   buildCertificateMetadata(params: {
     documentId: string;
@@ -139,8 +139,8 @@ export class IpfsService implements OnModuleInit {
     issuedAt?: string;
   }): Record<string, unknown> {
     return {
-      name: `Sertifikat Akademik - ${params.studentName}`,
-      description: `Sertifikat akademik ${params.degree} ${params.major} yang diterbitkan oleh ${params.issuerName}. Document ID: ${params.documentId}`,
+      name: `Academic Certificate - ${params.studentName}`,
+      description: `Academic certificate ${params.degree} ${params.major} issued by ${params.issuerName}. Document ID: ${params.documentId}`,
       image: `ipfs://${params.documentCid}`,
       external_url: `ipfs://${params.documentCid}`,
       attributes: [

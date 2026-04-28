@@ -26,10 +26,10 @@ describe("AcademicCertificate (Soulbound Token)", function () {
     const { contract, owner, issuer, student, verifier, otherAccount } =
       await deployFixture();
 
-    // Tambahkan issuer
-    await contract.addIssuer(issuer.address, "Universitas Gadjah Mada");
+    // Add issuer
+    await contract.addIssuer(issuer.address, "Universitas Muslim Indonesia");
 
-    // Register sertifikat sebagai issuer → mint SBT ke student
+    // Register certificate as issuer → mint SBT to student
     const contractAsIssuer = contract.connect(issuer);
     await contractAsIssuer.registerCertificate(
       "UMI-2022-13020220166",
@@ -58,22 +58,22 @@ describe("AcademicCertificate (Soulbound Token)", function () {
   // ============================================================
 
   describe("Deployment", function () {
-    it("Harus men-set deployer sebagai owner", async function () {
+    it("Should set deployer as owner", async function () {
       const { contract, owner } = await deployFixture();
       expect(await contract.owner()).to.equal(owner.address);
     });
 
-    it("Total sertifikat awal harus 0", async function () {
+    it("Initial total certificates should be 0", async function () {
       const { contract } = await deployFixture();
       expect(await contract.totalCertificates()).to.equal(0n);
     });
 
-    it("Nama token harus 'Academic Certificate SBT'", async function () {
+    it("Token name should be 'Academic Certificate SBT'", async function () {
       const { contract } = await deployFixture();
       expect(await contract.name()).to.equal("Academic Certificate SBT");
     });
 
-    it("Symbol token harus 'ACSBT'", async function () {
+    it("Token symbol should be 'ACSBT'", async function () {
       const { contract } = await deployFixture();
       expect(await contract.symbol()).to.equal("ACSBT");
     });
@@ -83,8 +83,8 @@ describe("AcademicCertificate (Soulbound Token)", function () {
   //                   ISSUER MANAGEMENT TESTS
   // ============================================================
 
-  describe("Manajemen Issuer", function () {
-    it("Owner harus bisa menambahkan issuer baru", async function () {
+  describe("Issuer Management", function () {
+    it("Owner should be able to add a new issuer", async function () {
       const { contract, issuer } = await deployFixture();
 
       await expect(
@@ -95,46 +95,46 @@ describe("AcademicCertificate (Soulbound Token)", function () {
 
       expect(await contract.authorizedIssuers(issuer.address)).to.be.true;
       expect(await contract.issuerNames(issuer.address)).to.equal(
-        "Universitas Gadjah Mada"
+        "Universitas Muslim Indonesia"
       );
     });
 
-    it("Non-owner tidak boleh menambahkan issuer", async function () {
+    it("Non-owner should not be able to add issuer", async function () {
       const { contract, issuer, otherAccount } = await deployFixture();
 
       const contractAsOther = contract.connect(otherAccount);
       await expect(
         contractAsOther.addIssuer(issuer.address, "Universitas Lain")
-      ).to.be.revertedWith("Hanya owner yang dapat mengakses fungsi ini");
+      ).to.be.revertedWith("Only the owner can access this function");
     });
 
-    it("Tidak bisa menambahkan issuer dengan alamat zero", async function () {
+    it("Cannot add issuer with zero address", async function () {
       const { contract } = await deployFixture();
 
       await expect(
         contract.addIssuer(ethers.ZeroAddress, "Universitas ABC")
-      ).to.be.revertedWith("Alamat issuer tidak valid");
+      ).to.be.revertedWith("Invalid issuer address");
     });
 
-    it("Tidak bisa menambahkan issuer dengan nama kosong", async function () {
+    it("Cannot add issuer with empty name", async function () {
       const { contract, issuer } = await deployFixture();
 
       await expect(contract.addIssuer(issuer.address, "")).to.be.revertedWith(
-        "Nama issuer tidak boleh kosong"
+        "Issuer name cannot be empty"
       );
     });
 
-    it("Tidak bisa menambahkan issuer yang sudah terdaftar", async function () {
+    it("Cannot add an already registered issuer", async function () {
       const { contract, issuer } = await deployFixture();
 
       await contract.addIssuer(issuer.address, "Universitas Muslim Indonesia");
 
       await expect(
         contract.addIssuer(issuer.address, "Universitas Muslim Indonesia")
-      ).to.be.revertedWith("Issuer sudah terdaftar");
+      ).to.be.revertedWith("Issuer is already registered");
     });
 
-    it("Owner harus bisa menghapus issuer", async function () {
+    it("Owner should be able to remove an issuer", async function () {
       const { contract, issuer } = await deployFixture();
 
       await contract.addIssuer(issuer.address, "Universitas Muslim Indonesia");
@@ -146,12 +146,12 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(await contract.authorizedIssuers(issuer.address)).to.be.false;
     });
 
-    it("Tidak bisa menghapus issuer yang tidak terdaftar", async function () {
+    it("Cannot remove an unregistered issuer", async function () {
       const { contract, otherAccount } = await deployFixture();
 
       await expect(
         contract.removeIssuer(otherAccount.address)
-      ).to.be.revertedWith("Issuer tidak ditemukan");
+      ).to.be.revertedWith("Issuer not found");
     });
   });
 
@@ -159,8 +159,8 @@ describe("AcademicCertificate (Soulbound Token)", function () {
   //            CERTIFICATE REGISTRATION (SBT MINT) TESTS
   // ============================================================
 
-  describe("Registrasi Sertifikat (Mint SBT)", function () {
-    it("Issuer harus bisa mendaftarkan sertifikat dan mint SBT ke mahasiswa", async function () {
+  describe("Certificate Registration (Mint SBT)", function () {
+    it("Issuer should be able to register a certificate and mint SBT to student", async function () {
       const { contract, issuer, student } = await deployFixture();
 
       await contract.addIssuer(issuer.address, "Universitas Muslim Indonesia");
@@ -193,24 +193,24 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(await contract.totalCertificates()).to.equal(1n);
     });
 
-    it("SBT harus dimiliki oleh wallet mahasiswa setelah mint", async function () {
+    it("SBT should be owned by the student wallet after minting", async function () {
       const { contract, student } = await deployWithCertificateFixture();
 
-      // Token ID 1 harus dimiliki oleh student
+      // Token ID 1 must be owned by student
       expect(await contract.ownerOf(1n)).to.equal(student.address);
 
-      // Balance student harus 1
+      // Student balance should be 1
       expect(await contract.balanceOf(student.address)).to.equal(1n);
     });
 
-    it("TokenURI harus sesuai dengan metadata URI yang di-set", async function () {
+    it("TokenURI should match the set metadata URI", async function () {
       const { contract } = await deployWithCertificateFixture();
 
       const uri = await contract.tokenURI(1n);
       expect(uri).to.equal("ipfs://QmMetadataHash123456789");
     });
 
-    it("DocumentId dan TokenId harus saling terhubung (mapping dua arah)", async function () {
+    it("DocumentId and TokenId should be linked (bidirectional mapping)", async function () {
       const { contract } = await deployWithCertificateFixture();
 
       // documentId -> tokenId
@@ -220,7 +220,7 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(await contract.tokenToDocumentId(1n)).to.equal("UMI-2022-13020220166");
     });
 
-    it("Non-issuer tidak boleh mendaftarkan sertifikat", async function () {
+    it("Non-issuer should not be able to register a certificate", async function () {
       const { contract, otherAccount, student } = await deployFixture();
 
       const contractAsOther = contract.connect(otherAccount);
@@ -236,11 +236,11 @@ describe("AcademicCertificate (Soulbound Token)", function () {
           ""
         )
       ).to.be.revertedWith(
-        "Hanya issuer yang berwenang yang dapat mengakses fungsi ini"
+        "Only authorized issuers can access this function"
       );
     });
 
-    it("Tidak bisa mendaftarkan sertifikat dengan documentId yang sama", async function () {
+    it("Cannot register a certificate with a duplicate documentId", async function () {
       const { contractAsIssuer, otherAccount } =
         await deployWithCertificateFixture();
 
@@ -255,10 +255,10 @@ describe("AcademicCertificate (Soulbound Token)", function () {
           "Teknik Informatika",
           ""
         )
-      ).to.be.revertedWith("Dokumen dengan ID ini sudah terdaftar");
+      ).to.be.revertedWith("Document with this ID is already registered");
     });
 
-    it("Tidak bisa mendaftarkan dengan wallet mahasiswa zero address", async function () {
+    it("Cannot register with zero address student wallet", async function () {
       const { contract, issuer } = await deployFixture();
       await contract.addIssuer(issuer.address, "Universitas Muslim Indonesia");
       const contractAsIssuer = contract.connect(issuer);
@@ -274,10 +274,10 @@ describe("AcademicCertificate (Soulbound Token)", function () {
           "Teknik Informatika",
           ""
         )
-      ).to.be.revertedWith("Alamat wallet mahasiswa tidak valid");
+      ).to.be.revertedWith("Invalid student wallet address");
     });
 
-    it("Tidak bisa mendaftarkan dengan CID kosong", async function () {
+    it("Cannot register with empty CID", async function () {
       const { contract, issuer, student } = await deployFixture();
       await contract.addIssuer(issuer.address, "Universitas Muslim Indonesia");
       const contractAsIssuer = contract.connect(issuer);
@@ -286,17 +286,17 @@ describe("AcademicCertificate (Soulbound Token)", function () {
         contractAsIssuer.registerCertificate(
           "UMI-2022-13020220166",
           "",
-          "Budi Santoso",
-          "20/504900/TK/51234",
+          "Mugni Adji",
+          "13020220166",
           student.address,
           "S1",
           "Teknik Informatika",
           ""
         )
-      ).to.be.revertedWith("IPFS CID tidak boleh kosong");
+      ).to.be.revertedWith("IPFS CID cannot be empty");
     });
 
-    it("Token ID harus auto-increment untuk setiap sertifikat baru", async function () {
+    it("Token ID should auto-increment for each new certificate", async function () {
       const { contract, contractAsIssuer, otherAccount } =
         await deployWithCertificateFixture();
 
@@ -322,7 +322,7 @@ describe("AcademicCertificate (Soulbound Token)", function () {
   // ============================================================
 
   describe("Soulbound Restriction (Non-transferable)", function () {
-    it("Student TIDAK boleh transfer SBT ke orang lain", async function () {
+    it("Student MUST NOT transfer SBT to others", async function () {
       const { contract, student, otherAccount } =
         await deployWithCertificateFixture();
 
@@ -334,10 +334,10 @@ describe("AcademicCertificate (Soulbound Token)", function () {
           otherAccount.address,
           1n
         )
-      ).to.be.revertedWith("Soulbound Token: token tidak dapat ditransfer");
+      ).to.be.revertedWith("Soulbound Token: token is non-transferable");
     });
 
-    it("Student TIDAK boleh safeTransferFrom SBT", async function () {
+    it("Student MUST NOT safeTransferFrom SBT", async function () {
       const { contract, student, otherAccount } =
         await deployWithCertificateFixture();
 
@@ -350,10 +350,10 @@ describe("AcademicCertificate (Soulbound Token)", function () {
           otherAccount.address,
           1n
         )
-      ).to.be.revertedWith("Soulbound Token: token tidak dapat ditransfer");
+      ).to.be.revertedWith("Soulbound Token: token is non-transferable");
     });
 
-    it("Student TIDAK boleh approve SBT ke orang lain", async function () {
+    it("Student MUST NOT approve SBT to others", async function () {
       const { contract, student, otherAccount } =
         await deployWithCertificateFixture();
 
@@ -361,10 +361,10 @@ describe("AcademicCertificate (Soulbound Token)", function () {
 
       await expect(
         contractAsStudent.approve(otherAccount.address, 1n)
-      ).to.be.revertedWith("Soulbound Token: approval tidak diizinkan");
+      ).to.be.revertedWith("Soulbound Token: approval is not allowed");
     });
 
-    it("Student TIDAK boleh setApprovalForAll", async function () {
+    it("Student MUST NOT setApprovalForAll", async function () {
       const { contract, student, otherAccount } =
         await deployWithCertificateFixture();
 
@@ -372,7 +372,7 @@ describe("AcademicCertificate (Soulbound Token)", function () {
 
       await expect(
         contractAsStudent.setApprovalForAll(otherAccount.address, true)
-      ).to.be.revertedWith("Soulbound Token: approval tidak diizinkan");
+      ).to.be.revertedWith("Soulbound Token: approval is not allowed");
     });
   });
 
@@ -380,8 +380,8 @@ describe("AcademicCertificate (Soulbound Token)", function () {
   //                 CERTIFICATE RETRIEVAL TESTS
   // ============================================================
 
-  describe("Pengambilan Data Sertifikat", function () {
-    it("Harus bisa mengambil data sertifikat yang valid (struct)", async function () {
+  describe("Certificate Data Retrieval", function () {
+    it("Should retrieve valid certificate data (struct)", async function () {
       const { contract, issuer, student } =
         await deployWithCertificateFixture();
 
@@ -401,15 +401,15 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(tokenId).to.equal(1n);
     });
 
-    it("Harus revert jika documentId tidak ditemukan", async function () {
+    it("Should revert if documentId not found", async function () {
       const { contract } = await deployFixture();
 
       await expect(
         contract.getCertificate("TIDAK-ADA-12345")
-      ).to.be.revertedWith("Dokumen dengan ID ini tidak ditemukan");
+      ).to.be.revertedWith("Document with this ID was not found");
     });
 
-    it("Harus bisa mengambil CID saja", async function () {
+    it("Should retrieve CID only", async function () {
       const { contract } = await deployWithCertificateFixture();
 
       const cid = await contract.getCID("UMI-2022-13020220166");
@@ -418,13 +418,13 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       );
     });
 
-    it("Harus bisa mengambil tokenId dari documentId", async function () {
+    it("Should retrieve tokenId from documentId", async function () {
       const { contract } = await deployWithCertificateFixture();
 
       expect(await contract.getTokenId("UMI-2022-13020220166")).to.equal(1n);
     });
 
-    it("Harus bisa mengambil documentId dari tokenId", async function () {
+    it("Should retrieve documentId from tokenId", async function () {
       const { contract } = await deployWithCertificateFixture();
 
       expect(await contract.getDocumentId(1n)).to.equal("UMI-2022-13020220166");
@@ -435,8 +435,8 @@ describe("AcademicCertificate (Soulbound Token)", function () {
   //                CERTIFICATE VERIFICATION TESTS
   // ============================================================
 
-  describe("Verifikasi Sertifikat", function () {
-    it("Harus bisa memverifikasi sertifikat dengan CID yang benar", async function () {
+  describe("Certificate Verification", function () {
+    it("Should verify certificate with correct CID", async function () {
       const { contract, issuer, student } =
         await deployWithCertificateFixture();
 
@@ -456,7 +456,7 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(result.tokenOwner).to.equal(student.address);
     });
 
-    it("Harus mendeteksi CID yang tidak cocok (dokumen palsu)", async function () {
+    it("Should detect mismatched CID (forged document)", async function () {
       const { contract } = await deployWithCertificateFixture();
 
       const result = await contract.verifyCertificate.staticCall(
@@ -465,10 +465,10 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       );
 
       expect(result.isValid).to.be.true;
-      expect(result.isMatching).to.be.false; // CID tidak cocok!
+      expect(result.isMatching).to.be.false; // CID does not match!
     });
 
-    it("Harus bisa verifikasi berdasarkan documentId saja (QR Code scan)", async function () {
+    it("Should verify by documentId only (QR Code scan)", async function () {
       const { contract, student } = await deployWithCertificateFixture();
 
       const [cert, tokenId] = await contract.verifyByDocumentId("UMI-2022-13020220166");
@@ -486,7 +486,7 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(tokenId).to.equal(1n);
     });
 
-    it("Harus emit CertificateVerified event saat verifikasi", async function () {
+    it("Should emit CertificateVerified event on verification", async function () {
       const { contract, verifier } = await deployWithCertificateFixture();
 
       const contractAsVerifier = contract.connect(verifier);
@@ -506,8 +506,8 @@ describe("AcademicCertificate (Soulbound Token)", function () {
   //            CERTIFICATE REVOCATION (BURN SBT) TESTS
   // ============================================================
 
-  describe("Pencabutan Sertifikat (Burn SBT)", function () {
-    it("Issuer asli harus bisa mencabut sertifikat (burn SBT)", async function () {
+  describe("Certificate Revocation (Burn SBT)", function () {
+    it("Original issuer should be able to revoke certificate (burn SBT)", async function () {
       const { contractAsIssuer, contract, issuer, student } =
         await deployWithCertificateFixture();
 
@@ -515,15 +515,15 @@ describe("AcademicCertificate (Soulbound Token)", function () {
         .to.emit(contract, "CertificateRevoked")
         .withArgs("UMI-2022-13020220166", 1n, issuer.address, () => true);
 
-      // Sertifikat harus invalid
+      // Certificate should be invalid
       const [cert] = await contract.getCertificate("UMI-2022-13020220166");
       expect(cert.isValid).to.be.false;
 
-      // Balance student harus 0 (token di-burn)
+      // Student balance should be 0 (token burned)
       expect(await contract.balanceOf(student.address)).to.equal(0n);
     });
 
-    it("Owner harus bisa mencabut sertifikat apapun", async function () {
+    it("Owner should be able to revoke any certificate", async function () {
       const { contract, student } = await deployWithCertificateFixture();
 
       await expect(contract.revokeCertificate("UMI-2022-13020220166")).to.emit(
@@ -537,7 +537,7 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(await contract.balanceOf(student.address)).to.equal(0n);
     });
 
-    it("Pihak lain tidak boleh mencabut sertifikat", async function () {
+    it("Others should not be able to revoke a certificate", async function () {
       const { contract, otherAccount } =
         await deployWithCertificateFixture();
 
@@ -545,32 +545,32 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       await expect(
         contractAsOther.revokeCertificate("UMI-2022-13020220166")
       ).to.be.revertedWith(
-        "Hanya issuer asli atau owner yang dapat mencabut sertifikat"
+        "Only the original issuer or owner can revoke a certificate"
       );
     });
 
-    it("Student TIDAK boleh mencabut sertifikat sendiri", async function () {
+    it("Student MUST NOT revoke their own certificate", async function () {
       const { contract, student } = await deployWithCertificateFixture();
 
       const contractAsStudent = contract.connect(student);
       await expect(
         contractAsStudent.revokeCertificate("UMI-2022-13020220166")
       ).to.be.revertedWith(
-        "Hanya issuer asli atau owner yang dapat mencabut sertifikat"
+        "Only the original issuer or owner can revoke a certificate"
       );
     });
 
-    it("Tidak bisa mencabut sertifikat yang sudah di-revoke", async function () {
+    it("Cannot revoke an already revoked certificate", async function () {
       const { contractAsIssuer } = await deployWithCertificateFixture();
 
       await contractAsIssuer.revokeCertificate("UMI-2022-13020220166");
 
       await expect(
         contractAsIssuer.revokeCertificate("UMI-2022-13020220166")
-      ).to.be.revertedWith("Sertifikat sudah di-revoke sebelumnya");
+      ).to.be.revertedWith("Certificate has already been revoked");
     });
 
-    it("Verifikasi sertifikat yang di-revoke harus menunjukkan invalid", async function () {
+    it("Verification of revoked certificate should show invalid", async function () {
       const { contract, contractAsIssuer } =
         await deployWithCertificateFixture();
 
@@ -590,15 +590,15 @@ describe("AcademicCertificate (Soulbound Token)", function () {
   //                     UTILITY FUNCTION TESTS
   // ============================================================
 
-  describe("Fungsi Utilitas", function () {
-    it("Harus bisa mengecek keberadaan sertifikat", async function () {
+  describe("Utility Functions", function () {
+    it("Should check certificate existence", async function () {
       const { contract } = await deployWithCertificateFixture();
 
       expect(await contract.certificateExists("UMI-2022-13020220166")).to.be.true;
       expect(await contract.certificateExists("TIDAK-ADA")).to.be.false;
     });
 
-    it("Harus bisa mengambil semua documentId", async function () {
+    it("Should retrieve all documentIds", async function () {
       const { contract, contractAsIssuer, otherAccount } =
         await deployWithCertificateFixture();
 
@@ -619,7 +619,7 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(allIds[1]).to.equal("UMI-2022-13020220167");
     });
 
-    it("Total sertifikat harus bertambah setiap registrasi", async function () {
+    it("Total certificates should increment on each registration", async function () {
       const { contract, contractAsIssuer, otherAccount } =
         await deployWithCertificateFixture();
 
@@ -639,22 +639,22 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(await contract.totalCertificates()).to.equal(2n);
     });
 
-    it("Owner harus bisa transfer ownership", async function () {
+    it("Owner should be able to transfer ownership", async function () {
       const { contract, otherAccount } = await deployFixture();
 
       await contract.transferOwnership(otherAccount.address);
       expect(await contract.owner()).to.equal(otherAccount.address);
     });
 
-    it("Tidak bisa transfer ownership ke address zero", async function () {
+    it("Cannot transfer ownership to zero address", async function () {
       const { contract } = await deployFixture();
 
       await expect(
         contract.transferOwnership(ethers.ZeroAddress)
-      ).to.be.revertedWith("Alamat owner baru tidak valid");
+      ).to.be.revertedWith("Invalid new owner address");
     });
 
-    it("supportsInterface harus mendukung ERC-721", async function () {
+    it("supportsInterface should support ERC-721", async function () {
       const { contract } = await deployFixture();
 
       // ERC-721 interfaceId = 0x80ac58cd
@@ -666,35 +666,35 @@ describe("AcademicCertificate (Soulbound Token)", function () {
   //                      INTEGRATION TESTS
   // ============================================================
 
-  describe("Integrasi: Alur Lengkap Registrasi SBT dan Verifikasi", function () {
-    it("Alur lengkap: deploy → add issuer → register (mint SBT) → verify → revoke (burn SBT)", async function () {
+  describe("Integration: Full SBT Registration and Verification Flow", function () {
+    it("Full flow: deploy → add issuer → register (mint SBT) → verify → revoke (burn SBT)", async function () {
       const [owner, issuer, student, verifier] = await ethers.getSigners();
       const contract = await ethers.deployContract("AcademicCertificate");
 
       // Step 1: Owner menambahkan issuer
       await contract.addIssuer(
         issuer.address,
-        "Institut Teknologi Bandung"
+        "Universitas Hasanuddin"
       );
       expect(await contract.authorizedIssuers(issuer.address)).to.be.true;
 
       // Step 2: Issuer mendaftarkan sertifikat (mint SBT ke student)
       const contractAsIssuer = contract.connect(issuer);
       await contractAsIssuer.registerCertificate(
-        "ITB-2024-00001",
+        "Unhas-2022-00020220001",
         "QmAbCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdef",
-        "Dewi Lestari",
-        "13519001",
+        "Miyako",
+        "00020220001",
         student.address,
         "S1",
         "Teknik Informatika",
-        "ipfs://QmMetadataITB001"
+        "ipfs://QmMetadataUnhas001"
       );
 
       // Step 3: Verifikasi SBT ada di wallet student
       expect(await contract.ownerOf(1n)).to.equal(student.address);
       expect(await contract.balanceOf(student.address)).to.equal(1n);
-      expect(await contract.tokenURI(1n)).to.equal("ipfs://QmMetadataITB001");
+      expect(await contract.tokenURI(1n)).to.equal("ipfs://QmMetadataUnhas001");
 
       // Step 4: Student TIDAK bisa transfer SBT
       const contractAsStudent = contract.connect(student);
@@ -704,18 +704,18 @@ describe("AcademicCertificate (Soulbound Token)", function () {
           verifier.address,
           1n
         )
-      ).to.be.revertedWith("Soulbound Token: token tidak dapat ditransfer");
+      ).to.be.revertedWith("Soulbound Token: token is non-transferable");
 
       // Step 5: Verifier memverifikasi via QR Code scan (struct return)
-      const [verifyCert, verifyTokenId] = await contract.verifyByDocumentId("ITB-2024-00001");
+      const [verifyCert, verifyTokenId] = await contract.verifyByDocumentId("Unhas-2022-00020220001");
       expect(verifyCert.isValid).to.be.true;
-      expect(verifyCert.studentName).to.equal("Dewi Lestari");
+      expect(verifyCert.studentName).to.equal("Miyako");
       expect(verifyCert.studentWallet).to.equal(student.address);
       expect(verifyTokenId).to.equal(1n);
 
       // Step 6: Deep verification dengan CID
       const deepVerify = await contract.verifyCertificate.staticCall(
-        "ITB-2024-00001",
+        "Unhas-2022-00020220001",
         "QmAbCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdef"
       );
       expect(deepVerify.isValid).to.be.true;
@@ -723,13 +723,13 @@ describe("AcademicCertificate (Soulbound Token)", function () {
       expect(deepVerify.tokenOwner).to.equal(student.address);
 
       // Step 7: Issuer mencabut sertifikat (burn SBT)
-      await contractAsIssuer.revokeCertificate("ITB-2024-00001");
+      await contractAsIssuer.revokeCertificate("Unhas-2022-00020220001");
 
       // Step 8: SBT sudah tidak ada di wallet student
       expect(await contract.balanceOf(student.address)).to.equal(0n);
 
       // Step 9: Verifikasi setelah revoke menunjukkan invalid (struct return)
-      const [afterRevokeCert] = await contract.verifyByDocumentId("ITB-2024-00001");
+      const [afterRevokeCert] = await contract.verifyByDocumentId("Unhas-2022-00020220001");
       expect(afterRevokeCert.isValid).to.be.false;
     });
   });

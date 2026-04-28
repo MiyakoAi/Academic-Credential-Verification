@@ -6,7 +6,7 @@ import type { Response } from 'express';
 @ApiTags('qrcode')
 @Controller('qrcode')
 export class QrcodeController {
-  constructor(private readonly qrcodeService: QrcodeService) {}
+  constructor(private readonly qrcodeService: QrcodeService) { }
 
   /**
    * GET /qrcode/:documentId
@@ -16,12 +16,12 @@ export class QrcodeController {
   @ApiOperation({
     summary: 'Generate QR Code (base64 Data URL)',
     description:
-      'Menghasilkan QR Code berisi URL verifikasi dalam format base64 Data URL. Cocok untuk ditampilkan di browser.',
+      'Generates a QR Code containing a verification URL in base64 Data URL format. Suitable for displaying in browser.',
   })
   @ApiParam({
     name: 'documentId',
-    description: 'ID unik dokumen',
-    example: 'UGM-2024-00001',
+    description: 'Unique document ID',
+    example: 'UMI-2022-13020220166',
   })
   async generateQRCode(@Param('documentId') documentId: string) {
     const dataUrl = await this.qrcodeService.generateQRCodeDataURL(documentId);
@@ -43,14 +43,14 @@ export class QrcodeController {
    */
   @Get(':documentId/download')
   @ApiOperation({
-    summary: 'Download QR Code sebagai file PNG',
+    summary: 'Download QR Code as PNG file',
     description:
-      'Menghasilkan file PNG QR Code yang bisa langsung diunduh untuk dicetak pada ijazah fisik',
+      'Generates a PNG QR Code file that can be directly downloaded for printing on physical certificates',
   })
   @ApiParam({
     name: 'documentId',
-    description: 'ID unik dokumen',
-    example: 'UGM-2024-00001',
+    description: 'Unique document ID',
+    example: 'UMI-2022-13020220166',
   })
   async downloadQRCode(
     @Param('documentId') documentId: string,
@@ -73,14 +73,14 @@ export class QrcodeController {
    */
   @Get(':documentId/svg')
   @ApiOperation({
-    summary: 'Generate QR Code sebagai SVG',
+    summary: 'Generate QR Code as SVG',
     description:
-      'Menghasilkan QR Code dalam format SVG (vektor) untuk kualitas cetak tinggi',
+      'Generates a QR Code in SVG (vector) format for high-quality printing',
   })
   @ApiParam({
     name: 'documentId',
-    description: 'ID unik dokumen',
-    example: 'UGM-2024-00001',
+    description: 'Unique document ID',
+    example: 'UMI-2022-13020220166',
   })
   async generateQRCodeSVG(
     @Param('documentId') documentId: string,

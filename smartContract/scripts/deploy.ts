@@ -7,7 +7,7 @@ async function main() {
   console.log("  Deploy AcademicCertificate (SBT)");
   console.log("===========================================\n");
 
-  // Ambil deployer (Account #0 dari Hardhat node)
+  // Get deployer (Account #0 from Hardhat node)
   const [deployer] = await ethers.getSigners();
   console.log("Deployer address:", deployer.address);
 
@@ -23,17 +23,17 @@ async function main() {
   const contractAddress = await contract.getAddress();
 
   console.log("\n===========================================");
-  console.log("  DEPLOY BERHASIL!");
+  console.log("  DEPLOY SUCCESSFUL!");
   console.log("===========================================");
   console.log("Contract Address:", contractAddress);
-  console.log("\nSalin alamat di atas dan paste ke file backend/.env");
-  console.log("pada bagian CONTRACT_ADDRESS=");
+  console.log("\nCopy the address above and paste it into backend/.env");
+  console.log("in the CONTRACT_ADDRESS= field");
   console.log("===========================================\n");
 }
 
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error("Deploy gagal:", error);
+    console.error("Deploy failed:", error);
     process.exit(1);
   });
