@@ -8,14 +8,14 @@ async function main() {
   // ===================================================
   const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
-  const DOCUMENT_ID = "004/A.08/FTI-TB/S1-UMI/2018";
-  const IPFS_CID = "bafkreihsq4krx37rwieiudjhoynrx2h3xfm4dvxtdwgjigu57skh3hzcfq";
-  const STUDENT_NAME = "Syamsinar";
-  const STUDENT_ID = "09320140174";
+  const DOCUMENT_ID = "UMI-2022-13020220111";
+  const IPFS_CID = "bafybeiavvdzxik3j5exv7jfwq7bmxelfopygkueqy5adnkjgl4oo2mm7p4";
+  const STUDENT_NAME = "Miyako";
+  const STUDENT_ID = "13020220111";
   const STUDENT_WALLET = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
   const DEGREE = "S1";
   const MAJOR = "Sarjana Teknik";
-  const METADATA_URI = "ipfs://bafkreic7h7cryvyimarolzqalk5hz2ihwyi4fa5b2ntz55ustefncvqmxa";
+  const METADATA_URI = "ipfs://bafkreidbyftxuoedec4vsb5kjjjpafd24b4nzkuggbrd5bontzel6wzjj4";
   // ===================================================
 
   console.log("===========================================");

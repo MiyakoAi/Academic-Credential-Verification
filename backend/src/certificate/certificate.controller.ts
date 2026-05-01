@@ -17,7 +17,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { CertificateService } from './certificate.service.js';
-import { RegisterCertificateDto } from './dto/certificate.dto.js';
+import { RegisterCertificateDto, SecureDownloadDto } from './dto/certificate.dto.js';
 
 @ApiTags('certificates')
 @Controller('certificates')
@@ -190,6 +190,65 @@ export class CertificateController {
         message:
           'Document NOT FOUND — This document ID is not registered on the blockchain',
         error: error.message,
+      };
+    }
+  }
+
+  /**
+   * POST /certificates/download
+   *
+   * Secure Download: returns IPFS link only if credentials match
+   */
+  @Post('download')
+  @ApiOperation({
+    summary: 'Secure download of original certificate PDF',
+    description: `
+      Requires exact match of Document ID, Student ID (NIM), and Wallet Address
+      against the blockchain record. Returns the IPFS gateway URL to download
+      the original file only if all three credentials are verified.
+    `,
+  })
+  @ApiConsumes('application/x-www-form-urlencoded')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['documentId', 'studentId', 'studentWallet'],
+      properties: {
+        documentId: {
+          type: 'string',
+          example: 'UMI-2022-13020220166',
+          description: 'Unique document ID',
+        },
+        studentId: {
+          type: 'string',
+          example: '13020220166',
+          description: 'Student ID number (NIM)',
+        },
+        studentWallet: {
+          type: 'string',
+          example: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+          description: 'Student wallet address',
+        },
+      },
+    },
+  })
+  async secureDownload(@Body() dto: SecureDownloadDto) {
+    try {
+      const result = await this.certificateService.secureDownload(
+        dto.documentId,
+        dto.studentId,
+        dto.studentWallet,
+      );
+
+      return {
+        success: true,
+        message: 'Credentials verified — secure download link generated',
+        data: result,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Download authorization failed',
       };
     }
   }

@@ -84,3 +84,34 @@ export class VerifyDocumentDto {
   @IsOptional()
   cid?: string;
 }
+
+/**
+ * DTO for Secure Download feature
+ * Requires Document ID, Student ID (NIM), and Wallet Address
+ * All three must match the blockchain record to authorize download
+ */
+export class SecureDownloadDto {
+  @ApiProperty({
+    description: 'Unique document ID',
+    example: 'UMI-2022-13020220166',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Document ID cannot be empty' })
+  documentId: string;
+
+  @ApiProperty({
+    description: 'Student ID number (NIM)',
+    example: '13020220166',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Student ID cannot be empty' })
+  studentId: string;
+
+  @ApiProperty({
+    description: 'Student wallet address',
+    example: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Wallet address cannot be empty' })
+  studentWallet: string;
+}

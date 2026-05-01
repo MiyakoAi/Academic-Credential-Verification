@@ -127,12 +127,7 @@ export class CertificateService {
     const blockchainData =
       await this.blockchainService.verifyByDocumentId(documentId);
 
-    // Step 2: Create IPFS gateway URL for the original file
-    const documentUrl = this.ipfsService.getGatewayUrl(
-      blockchainData.certificate.ipfsCID,
-    );
-
-    // Step 3: Generate QR code (to display on verification page)
+    // Step 2: Generate QR code (to display on verification page)
     const qrCodeDataUrl =
       await this.qrcodeService.generateQRCodeDataURL(documentId);
 
@@ -144,8 +139,55 @@ export class CertificateService {
       isValid: blockchainData.isValid,
       certificate: blockchainData.certificate,
       tokenId: blockchainData.tokenId,
-      documentUrl,
       qrCode: qrCodeDataUrl,
+    };
+  }
+
+  /**
+   * SECURE DOWNLOAD - Retrieve IPFS download link only if credentials match
+   *
+   * Security: Requires Document ID + Student ID (NIM) + Wallet Address.
+   * All three must exactly match the blockchain record.
+   *
+   * @param documentId Document ID
+   * @param studentId Student NIM
+   * @param studentWallet Student wallet address
+   */
+  async secureDownload(
+    documentId: string,
+    studentId: string,
+    studentWallet: string,
+  ) {
+    this.logger.log(`Secure download requested for: ${documentId}`);
+
+    // Step 1: Query blockchain for certificate data
+    const blockchainData =
+      await this.blockchainService.verifyByDocumentId(documentId);
+
+    // Step 2: Check if certificate is still valid
+    if (!blockchainData.isValid) {
+      throw new Error('Certificate is invalid or has been revoked');
+    }
+
+    // Step 3: Verify credentials match blockchain record
+    if (
+      blockchainData.certificate.studentId !== studentId ||
+      blockchainData.certificate.studentWallet.toLowerCase() !==
+        studentWallet.toLowerCase()
+    ) {
+      throw new Error('Credentials do not match the blockchain record');
+    }
+
+    // Step 4: Credentials verified — generate IPFS gateway URL
+    const documentUrl = this.ipfsService.getGatewayUrl(
+      blockchainData.certificate.ipfsCID,
+    );
+
+    this.logger.log(`Secure download GRANTED for: ${documentId}`);
+
+    return {
+      documentUrl,
+      certificate: blockchainData.certificate,
     };
   }
 
@@ -172,7 +214,7 @@ export class CertificateService {
     );
 
     this.logger.log(
-      `Deep verify selesai: ${documentId} → Valid: ${verifyResult.isValid}, Match: ${verifyResult.isMatching}`,
+      `Deep verify complete: ${documentId} → Valid: ${verifyResult.isValid}, Match: ${verifyResult.isMatching}`,
     );
 
     return {
