@@ -17,15 +17,29 @@ async function main() {
   // Deploy contract
   console.log("Deploying AcademicCertificate...");
   const AcademicCertificate = await ethers.getContractFactory("AcademicCertificate");
-  const contract = await AcademicCertificate.deploy();
 
-  await contract.waitForDeployment();
-  const contractAddress = await contract.getAddress();
+  const deployStartTime = Date.now();
+  const certificate = await AcademicCertificate.deploy();
+
+  await certificate.waitForDeployment();
+  const contractAddress = await certificate.getAddress();
+  const deployTime = ((Date.now() - deployStartTime) / 1000).toFixed(3);
+
+  // Automatically register owner as the first issuer
+  console.log("Authorizing deployer as the first issuer...");
+
+  const issuerStartTime = Date.now();
+  const tx = await certificate.addIssuer(deployer.address, "Super Admin Kampus");
+  await tx.wait();
+  const issuerTime = ((Date.now() - issuerStartTime) / 1000).toFixed(3);
 
   console.log("\n===========================================");
   console.log("  DEPLOY SUCCESSFUL!");
   console.log("===========================================");
   console.log("Contract Address:", contractAddress);
+  console.log("Deploy Time          :", deployTime, "seconds (s)");
+  console.log("Issuer Register Time :", issuerTime, "seconds (s)");
+  console.log("Total Time           :", ((Date.now() - deployStartTime) / 1000).toFixed(3), "seconds (s)");
   console.log("\nCopy the address above and paste it into backend/.env");
   console.log("in the CONTRACT_ADDRESS= field");
   console.log("===========================================\n");

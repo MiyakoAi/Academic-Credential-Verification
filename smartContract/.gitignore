@@ -12,6 +12,7 @@
 
 # Hardhat compilation (v2) support directory
 /cache
+/scripts/bmt.ts
 
 # Typechain output
 /types

@@ -161,10 +161,11 @@ export class CertificateController {
       Main endpoint when a verifier scans the QR Code on a physical certificate.
       
       Process:
-      1. QR Code contains URL: /verify?id=documentId
-      2. Frontend sends request to this endpoint
-      3. Backend queries blockchain + fetches IPFS data
-      4. Returns validity status + certificate data
+      1. QR Code contains encrypted URL: /verify?data=<AES-256-CBC encrypted documentId>
+      2. Frontend decrypts the data via /qrcode/decrypt endpoint
+      3. Frontend sends decrypted documentId to this endpoint
+      4. Backend queries blockchain + fetches IPFS data
+      5. Returns validity status + certificate data
     `,
   })
   @ApiParam({

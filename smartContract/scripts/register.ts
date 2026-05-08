@@ -1,4 +1,5 @@
 import { network } from "hardhat";
+import "dotenv/config";
 
 const { ethers } = await network.create();
 
@@ -6,7 +7,7 @@ async function main() {
   // ===================================================
   // TESTING FILE REGISTER DI SMART CONTRACT [ISI DATA]
   // ===================================================
-  const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+  const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS!;
 
   const DOCUMENT_ID = "UMI-2022-13020220111";
   const IPFS_CID = "bafybeiavvdzxik3j5exv7jfwq7bmxelfopygkueqy5adnkjgl4oo2mm7p4";
@@ -51,6 +52,8 @@ async function main() {
   console.log("   Wallet      :", STUDENT_WALLET);
   console.log("   CID         :", IPFS_CID);
 
+  const startTime = Date.now();
+
   const txRegister = await contract.registerCertificate(
     DOCUMENT_ID,
     IPFS_CID,
@@ -64,12 +67,16 @@ async function main() {
 
   const receipt = await txRegister.wait();
   if (!receipt) throw new Error("Transaction failed: receipt is null");
+
+  const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(3);
+
   console.log("\n===========================================");
   console.log("  REGISTRATION SUCCESSFUL!");
   console.log("===========================================");
   console.log("TX Hash    :", receipt.hash);
   console.log("Block      :", receipt.blockNumber);
   console.log("Gas Used   :", receipt.gasUsed.toString());
+  console.log("TX Confirmation Time :", elapsedTime, "seconds (s)");
   console.log("===========================================\n");
 
   // Step 3: Verify that data is stored
