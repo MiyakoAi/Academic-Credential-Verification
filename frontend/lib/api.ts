@@ -219,7 +219,7 @@ export interface BlockchainStats {
  */
 export async function getBlockchainStats(): Promise<BlockchainStats> {
   const res = await apiFetch<{ success: boolean; data: { totalCertificates: number } }>('/blockchain/stats');
-  
+
   return {
     totalCertificates: res.data.totalCertificates || 0,
     contractAddress: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '',
